@@ -15,7 +15,7 @@ import FamilyCard from '../components/FamilyCard.jsx';
 import RecordModal from '../components/RecordModal.jsx';
 import EditsModal from '../components/EditsModal.jsx';
 
-export default function SearchPage() {
+export default function SearchPage({ onOpenAdmin }) {
   const { user } = useAuth();
   const toast = useToast();
 
@@ -190,7 +190,7 @@ export default function SearchPage() {
 
   return (
     <>
-      <Header subtitle={subtitle} />
+      <Header subtitle={subtitle} onOpenAdmin={onOpenAdmin} />
 
       <div className="stickybar">
         <div className="wrap">

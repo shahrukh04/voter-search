@@ -43,7 +43,9 @@ export const api = {
 
   adminUsers: () => request('/admin/users'),
   adminUpsertUser: (payload) => request('/admin/users', { method: 'POST', body: payload }),
-  adminRequests: () => request('/admin/requests'),
+  adminUpdateUser: (id, payload) => request('/admin/users/' + id, { method: 'PATCH', body: payload }),
+  adminRequests: () => request('/subscribe'),
+  adminUpdateRequest: (id, status) => request('/admin/requests/' + id, { method: 'PATCH', body: { status } }),
 };
 
 export { request };

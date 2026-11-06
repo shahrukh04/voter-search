@@ -280,6 +280,26 @@ footer{color:var(--mut);font-size:12.5px;text-align:center;padding:6px 18px 30px
   .fh{padding:14px 12px 8px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* ---------- admin panel ---------- */
+.adm{min-height:100vh;background:var(--bg)}
+.adm-hero{position:sticky;top:0;z-index:40;background:var(--hero);color:#fff;padding:calc(env(safe-area-inset-top) + 12px) 0 12px;box-shadow:0 8px 26px rgba(21,11,69,.35)}
+.adm-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,#f0d27a,#c79a1f,#f0d27a,transparent);background-size:200% 100%;animation:slide 5s linear infinite}
+.adm-hero-in{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.adm-own{font-size:clamp(20px,5vw,28px);font-weight:900;letter-spacing:.04em;background:linear-gradient(100deg,#fff3c4,#f0d27a 45%,#e0b84a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.adm-sub{font-size:12.5px;color:#d9d0ff}
+.adm-hbtns{display:flex;gap:8px}
+.segbar{display:flex;gap:6px;padding:5px;margin:16px 0;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--sh1)}
+.adm-tab{position:relative;flex:1;border:0;background:none;padding:11px 8px;border-radius:14px;font-weight:800;font-size:14px;color:var(--mut);transition:.25s}
+.adm-tab.on{background:linear-gradient(135deg,var(--royal2),#2b1673);color:#fff;box-shadow:0 6px 16px rgba(74,43,181,.4)}
+.adm-list{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));padding-bottom:60px}
+.adm-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh1);padding:14px;animation:rise .5s both}
+.adm-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.adm-nm{font-weight:800;font-size:16px;color:var(--ink);word-break:break-word}
+.adm-when{font-size:12px;color:var(--mut);white-space:nowrap;flex:none}
+.adm-meta{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;color:var(--ink);margin-bottom:10px}
+.adm-date{height:40px;border:1.5px solid var(--line);border-radius:12px;padding:0 10px;background:var(--card);color:var(--ink);font-size:14px;font-family:inherit}
+.adm .fld{margin-bottom:10px}
+
 @media print{
   .hero,.stickybar,.panel,.tabbar,.scrim,.more,.stats,.bar .btn,footer,.modal,.toast,.fa,.expand{display:none!important}
   body{background:#fff;color:#000}.layout{display:block}

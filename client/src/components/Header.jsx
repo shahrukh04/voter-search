@@ -17,7 +17,7 @@ function Crest() {
   );
 }
 
-export default function Header({ subtitle }) {
+export default function Header({ subtitle, onOpenAdmin }) {
   const { user, config, logout } = useAuth();
   const { theme, toggle } = useTheme();
 
@@ -32,6 +32,9 @@ export default function Header({ subtitle }) {
           <h1>{(config && config.title) || 'जालिया द्वितीय ग्राम पंचायत'}</h1>
           <p>{subtitle}</p>
         </div>
+        {onOpenAdmin ? (
+          <button className="icon-btn" onClick={onOpenAdmin} title="एडमिन पैनल" aria-label="एडमिन पैनल">🛡</button>
+        ) : null}
         <button className="icon-btn" onClick={logout} title={user ? user.name : 'लॉग आउट'} aria-label="लॉग आउट">⎋</button>
         <button className="icon-btn" onClick={toggle} aria-label="थीम बदलें">{theme === 'dark' ? '☀️' : '🌙'}</button>
       </div>

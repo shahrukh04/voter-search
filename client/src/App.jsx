@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from './context/AuthContext.jsx';
 import Login from './pages/Login.jsx';
 import SearchPage from './pages/SearchPage.jsx';
+import AdminPanel from './pages/AdminPanel.jsx';
 
 export default function App() {
-  const { booting, isAuthed } = useAuth();
+  const { booting, isAuthed, user } = useAuth();
+  const [adminOpen, setAdminOpen] = useState(false);
+
+  const isAdmin = !!(user && user.role === 'admin');
+
+  // non-admins (or after logout) must never keep the panel open
+  useEffect(() => {
+    if (!isAdmin) setAdminOpen(false);
+  }, [isAdmin]);
 
   if (booting) {
     return (
@@ -15,5 +24,9 @@ export default function App() {
     );
   }
 
-  return isAuthed ? <SearchPage /> : <Login />;
+  if (!isAuthed) return <Login />;
+
+  if (adminOpen && isAdmin) return <AdminPanel onClose={() => setAdminOpen(false)} />;
+
+  return <SearchPage onOpenAdmin={isAdmin ? () => setAdminOpen(true) : null} />;
 }
