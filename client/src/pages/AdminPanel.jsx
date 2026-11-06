@@ -74,9 +74,21 @@ export default function AdminPanel({ onClose }) {
   async function setReqStatus(id, status) {
     setBusyId(id);
     try {
-      await api.adminUpdateRequest(id, status);
-      setReqs((list) => (list || []).map((x) => (x._id === id ? { ...x, status } : x)));
-      toast(status === 'approved' ? '✓ स्वीकृत' : status === 'rejected' ? '✕ अस्वीकृत' : '↺ पेंडिंग');
+      const res = await api.adminUpdateRequest(id, status);
+      const req = res.request || null;
+      setReqs((list) => (list || []).map((x) => (x._id === id ? req || { ...x, status } : x)));
+
+      if (status === 'approved') {
+        if (res.user) {
+          sendCredentials(req || {}, res.user);
+          toast('✓ स्वीकृत — यूज़र बन गया, WhatsApp खुल रहा है');
+          loadUsers();
+        } else {
+          toast('⚠ स्वीकृत, पर पासवर्ड नहीं था — यूज़र नहीं बना');
+        }
+      } else {
+        toast(status === 'rejected' ? '✕ अस्वीकृत' : '↺ पेंडिंग');
+      }
     } catch (e) {
       toast('⚠ अपडेट नहीं हुआ');
     } finally {
@@ -84,13 +96,30 @@ export default function AdminPanel({ onClose }) {
     }
   }
 
+  function waLink(mobile, text) {
+    const to = String(mobile || '').replace(/\D/g, '');
+    window.open('https://wa.me/91' + to + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  }
+
+  // Sent to the applicant as soon as the admin approves their request.
+  function sendCredentials(req, u) {
+    const text =
+      'नमस्ते,\n' +
+      'जालिया मतदाता ऐप — आपका सब्सक्रिप्शन स्वीकृत हो गया ✅\n\n' +
+      'लॉगिन आईडी: ' + u.username + '\n' +
+      'पासवर्ड: ' + (req.password || '') + '\n\n' +
+      'ऐप खोलकर इन्हीं से लॉगिन करें।';
+    waLink(req.mobile, text);
+  }
+
   function whatsapp(r) {
     const text =
-      'नमस्ते ' + r.name + ',\n' +
+      'नमस्ते,\n' +
       'जालिया मतदाता ऐप सब्सक्रिप्शन —\n' +
       'लॉगिन आईडी: ' + r.loginId + '\n' +
+      (r.password ? 'पासवर्ड: ' + r.password + '\n' : '') +
       'प्लान: ' + (r.plan || PLAN_DEFAULT) + '\n';
-    window.open('https://wa.me/91' + r.mobile + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    waLink(r.mobile, text);
   }
 
   function prefillUser(r) {
@@ -184,7 +213,9 @@ export default function AdminPanel({ onClose }) {
           {err ? <div className="note" style={{ color: '#c0392b' }}>{err}</div> : null}
 
           {tab === 'requests' ? (
-            reqs === null ? <div className="boot" style={{ position: 'static', padding: 40 }}><div className="spin" /></div> : (
+            <>
+            <div className="note">✅ "स्वीकृत" करते ही यूज़र अपने-आप बन जाता है और उसके WhatsApp पर लॉगिन आईडी/पासवर्ड भेजने का मैसेज खुलता है।</div>
+            {reqs === null ? <div className="boot" style={{ position: 'static', padding: 40 }}><div className="spin" /></div> : (
               !reqs.length ? (
                 <div className="empty"><div className="em">🔔</div><h3>कोई अनुरोध नहीं</h3><div>लॉगिन स्क्रीन से भेजे गए सब्सक्रिप्शन अनुरोध यहाँ दिखेंगे।</div></div>
               ) : (
@@ -213,7 +244,8 @@ export default function AdminPanel({ onClose }) {
                   ))}
                 </div>
               )
-            )
+            )}
+            </>
           ) : (
             <>
               <form className="adm-card" onSubmit={createUser}>

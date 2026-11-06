@@ -92,7 +92,7 @@ export default function Login() {
 
 function Subscribe({ config, onBack, message }) {
   const toast = useToast();
-  const [form, setForm] = useState({ nm: '', mobile: '', village: 'जालिया द्वितीय', loginId: '' });
+  const [form, setForm] = useState({ username: '', mobile: '', password: '' });
   const [err, setErr] = useState('');
   const contact = (config && config.contactMobile) || '6378375233';
   const plan = (config && config.plan) || '₹5,000 / माह';
@@ -100,26 +100,25 @@ function Subscribe({ config, onBack, message }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function send() {
-    if (!form.nm.trim() || !/^[0-9]{10}$/.test(form.mobile.trim()) || !form.loginId.trim()) {
-      setErr('नाम, 10 अंक का मोबाइल और लॉगिन आईडी भरें');
+    const username = form.username.trim();
+    if (!username || !/^[0-9]{10}$/.test(form.mobile.trim()) || form.password.length < 4) {
+      setErr('लॉगिन आईडी, 10 अंक का मोबाइल और 4+ अक्षर का पासवर्ड भरें');
       return;
     }
     setErr('');
     const text =
       '🔔 जालिया मतदाता ऐप — सब्सक्रिप्शन अनुरोध\n' +
-      'नाम: ' + form.nm + '\n' +
+      'लॉगिन आईडी: ' + username + '\n' +
       'मोबाइल: ' + form.mobile + '\n' +
-      'गाँव/पद: ' + form.village + '\n' +
-      'चाही गई ID: ' + form.loginId + '\n' +
       'प्लान: ' + plan + '\n' +
       'भुगतान कर दिया है, कृपया चालू करें।';
 
     try {
       await api.subscribe({
-        name: form.nm,
+        name: username,
         mobile: form.mobile,
-        village: form.village,
-        loginId: form.loginId,
+        loginId: username,
+        password: form.password,
         plan,
       });
     } catch (e) {
@@ -143,10 +142,9 @@ function Subscribe({ config, onBack, message }) {
           📱 <b>{contact}</b>
           <button type="button" className="cpb" onClick={() => { copyText(contact).then(() => toast('✓ कॉपी हो गया')); }}>कॉपी</button>
         </div>
-        <label>आपका नाम<div className="in"><input value={form.nm} onChange={set('nm')} /></div></label>
+        <label>लॉगिन आईडी<div className="in"><input value={form.username} onChange={set('username')} autoCapitalize="off" autoCorrect="off" spellCheck="false" /></div></label>
         <label>मोबाइल नंबर<div className="in"><input value={form.mobile} inputMode="numeric" maxLength={10} onChange={set('mobile')} /></div></label>
-        <label>गाँव / पद<div className="in"><input value={form.village} onChange={set('village')} /></div></label>
-        <label>पसंदीदा लॉगिन आईडी<div className="in"><input value={form.loginId} onChange={set('loginId')} autoCapitalize="off" /></div></label>
+        <label>पासवर्ड<div className="in"><input type="text" value={form.password} onChange={set('password')} autoCapitalize="off" autoCorrect="off" spellCheck="false" /></div></label>
         <button type="button" className="go" onClick={send}>✅ Subscribe — Admin को अनुरोध भेजें</button>
         <div className="err">{err}</div>
         <button type="button" className="lnk" onClick={onBack}>← लॉगिन पर वापस</button>

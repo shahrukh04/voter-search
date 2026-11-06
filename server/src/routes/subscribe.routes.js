@@ -7,15 +7,18 @@ const router = express.Router();
 // POST /api/subscribe -> public, raised from the login screen
 router.post('/', async (req, res) => {
   try {
-    const { name, mobile, village, loginId, plan, note } = req.body || {};
-    if (!name || !/^[0-9]{10}$/.test(String(mobile || '')) || !loginId) {
+    const { name, mobile, village, loginId, password, plan, note } = req.body || {};
+    const uname = String(loginId || '').trim();
+    const pass = String(password || '');
+    if (!uname || !/^[0-9]{10}$/.test(String(mobile || '')) || pass.length < 4) {
       return res.status(400).json({ error: 'invalid_request' });
     }
     const doc = await SubscribeRequest.create({
-      name: String(name).trim(),
+      name: String(name || uname).trim(),
       mobile: String(mobile).trim(),
       village: String(village || '').trim(),
-      loginId: String(loginId).trim().toLowerCase(),
+      loginId: uname,
+      password: pass,
       plan: plan || '₹5,000 / माह',
       note: note || '',
     });
