@@ -1,0 +1,20 @@
+node_modules
+**/node_modules
+
+# build output (rebuilt inside the image)
+client/dist
+
+# secrets — must never enter the image
+.env
+**/.env
+
+# decrypted personal data
+server/src/seed/voters.json
+server/src/seed/blob.json
+tools
+
+# git & editor junk
+.git
+.vscode
+.idea
+*.log

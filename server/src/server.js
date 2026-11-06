@@ -1,4 +1,6 @@
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -40,7 +42,21 @@ app.use('/api/edits', editRoutes);
 app.use('/api/subscribe', subscribeRoutes);
 app.use('/api/admin', adminRoutes);
 
-app.use((req, res) => res.status(404).json({ error: 'not_found', path: req.path }));
+// Unknown API routes -> JSON 404
+app.use('/api', (req, res) => res.status(404).json({ error: 'not_found', path: req.path }));
+
+// ---- Single-service deploy: serve the built React app alongside the API ----
+const CLIENT_DIST = process.env.CLIENT_DIST || path.join(__dirname, '..', '..', 'client', 'dist');
+const CLIENT_INDEX = path.join(CLIENT_DIST, 'index.html');
+const hasClientBuild = fs.existsSync(CLIENT_INDEX);
+
+if (hasClientBuild) {
+  app.use(express.static(CLIENT_DIST));
+  // SPA fallback so client-side routes resolve to index.html
+  app.get('*', (_req, res) => res.sendFile(CLIENT_INDEX));
+} else {
+  app.use((req, res) => res.status(404).json({ error: 'not_found', path: req.path }));
+}
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
