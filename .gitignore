@@ -1,0 +1,24 @@
+node_modules/
+dist/
+build/
+
+# env & secrets
+.env
+.env.local
+server/.env
+client/.env.local
+
+# decrypted voter data (contains personal data — never commit)
+server/src/seed/voters.json
+server/src/seed/blob.json
+tools/blob.json
+
+# logs / os
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode/
+.idea/

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#2b1673" />
+    <title>जालिया मतदाता खोज</title>
+    <script>
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem('jv-theme'); } catch (e) {}
+        if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
