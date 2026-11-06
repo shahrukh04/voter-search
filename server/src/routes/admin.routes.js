@@ -72,19 +72,20 @@ router.post('/users', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/users/:id  { expiresAt?, active?, password? }
+// PATCH /api/admin/users/:id  { expiresAt?, active?, password?, role? }
 router.patch('/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: 'not_found' });
 
-    const { expiresAt, active, password } = req.body || {};
+    const { expiresAt, active, password, role } = req.body || {};
     if (expiresAt) {
       const exp = new Date(expiresAt);
       if (isNaN(exp.getTime())) return res.status(400).json({ error: 'invalid_expires_at' });
       user.expiresAt = exp;
     }
     if (typeof active === 'boolean') user.active = active;
+    if (role === 'admin' || role === 'user') user.role = role;
     if (password) user.passwordHash = await bcrypt.hash(String(password), 10);
 
     await user.save();

@@ -143,6 +143,21 @@ export default function AdminPanel({ onClose }) {
     }
   }
 
+  async function changeRole(u) {
+    const next = u.role === 'admin' ? 'user' : 'admin';
+    if (u.username === (user && user.username)) { toast('⚠ अपनी ही भूमिका नहीं बदल सकते'); return; }
+    setBusyId(u.id);
+    try {
+      const r = await api.adminUpdateUser(u.id, { role: next });
+      setUsers((list) => (list || []).map((x) => (x.id === u.id ? r.user : x)));
+      toast(next === 'admin' ? '🛡 एडमिन बना दिया' : '👤 यूज़र बना दिया');
+    } catch (e) {
+      toast('⚠ भूमिका नहीं बदली');
+    } finally {
+      setBusyId('');
+    }
+  }
+
   async function saveExpiry(u) {
     if (!editDate) { toast('तारीख चुनें'); return; }
     setBusyId(u.id);
@@ -293,6 +308,9 @@ export default function AdminPanel({ onClose }) {
                         <div className="mact">
                           <button className={'btn sm' + (u.active ? '' : ' gold')} disabled={busyId === u.id} onClick={() => toggleActive(u)}>
                             {u.active ? '⏸ निष्क्रिय करें' : '▶️ सक्रिय करें'}
+                          </button>
+                          <button className={'btn sm' + (u.role === 'admin' ? '' : ' gold')} disabled={busyId === u.id} onClick={() => changeRole(u)}>
+                            {u.role === 'admin' ? '👤 यूज़र बनाएँ' : '🛡 एडमिन बनाएँ'}
                           </button>
                           <button className="btn sm" onClick={() => { setEditing(u.id); setEditDate(toDateInput(u.expiresAt)); }}>📅 तारीख बदलें</button>
                         </div>
