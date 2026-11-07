@@ -3,7 +3,7 @@ import { api } from '../lib/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { exportCSV, fmt } from '../lib/format.js';
-import { defaultState, houseKey, PAGE_F, PAGE_V, parseQuery, prepare, run, SMODE_PLACEHOLDER, SMODES, suggest } from '../lib/search.js';
+import { defaultState, houseKey, PAGE_F, PAGE_V, parseQuery, prepare, REL_PLACEHOLDER, run, SMODE_PLACEHOLDER, SMODES, suggest } from '../lib/search.js';
 
 import Header from '../components/Header.jsx';
 import SearchBar from '../components/SearchBar.jsx';
@@ -27,6 +27,7 @@ export default function SearchPage({ onOpenAdmin }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [modal, setModal] = useState(null); // {type:'record', i} | {type:'edits'}
   const [sugList, setSugList] = useState([]);
+  const [sugList2, setSugList2] = useState([]);
   const sugTimer = useRef(null);
 
   /* ---------- load data ---------- */
@@ -50,7 +51,11 @@ export default function SearchPage({ onOpenAdmin }) {
   const result = useMemo(() => (ctx ? run(ctx, S) : { toks: [], RES: [], wardCnt: {}, NOHOUSE: 0, MATCH: null }), [ctx, S]);
   const { RES, wardCnt, NOHOUSE, MATCH } = result;
 
-  const qWords = useMemo(() => parseQuery(S.q).filter((k) => k.t === 'name').map((k) => k.v), [S.q]);
+  const qWords = useMemo(() => {
+    const arr = parseQuery(S.q);
+    if (S.smode === 'dono' && S.q2) arr.push(...parseQuery(S.q2));
+    return arr.filter((k) => k.t === 'name').map((k) => k.v);
+  }, [S.q, S.q2, S.smode]);
 
   const mohallaOpts = useMemo(() => {
     if (!ctx) return [];
@@ -70,8 +75,9 @@ export default function SearchPage({ onOpenAdmin }) {
     if (!ctx) return undefined;
     clearTimeout(sugTimer.current);
     sugTimer.current = setTimeout(() => {
-      const toks = parseQuery(S.q).filter((k) => k.t === 'name');
-      setSugList(toks.length ? suggest(ctx, S) : []);
+      const side = S.smode === 'pita' ? 'r' : 'n';
+      setSugList(suggest(ctx, S, side));
+      setSugList2(S.smode === 'dono' ? suggest(ctx, S, 'r') : []);
     }, 120);
     return () => clearTimeout(sugTimer.current);
   }, [ctx, S]);
@@ -209,6 +215,20 @@ export default function SearchPage({ onOpenAdmin }) {
               <button className={S.view === 'family' ? 'on' : ''} onClick={() => setView('family')}>🏠 परिवार</button>
             </div>
           </div>
+          {S.smode === 'dono' ? (
+            <div className="srow sub">
+              <span className="sublab">पिता/पति का नाम</span>
+              <SearchBar
+                value={S.q2}
+                onChange={(v) => setS((s) => ({ ...s, q2: v }))}
+                onPick={(n) => setS((s) => ({ ...s, q2: n }))}
+                suggestions={sugList2}
+                qWords={qWords}
+                placeholder={REL_PLACEHOLDER}
+                shortcut={false}
+              />
+            </div>
+          ) : null}
           <div className="modes">
             <span className="mlab">कहाँ खोजें:</span>
             {SMODES.map(([v, t]) => (

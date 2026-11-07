@@ -35,11 +35,13 @@ export const SMODES = [
 export const SMODE_PLACEHOLDER = {
   naam: 'नाम लिखें — मात्रा की चिंता नहीं: रमेश / ramesh / 145',
   pita: 'पिता/पति का नाम लिखें — जैसे रामलाल / ramlal',
-  dono: 'नाम और साथ में पिता/पति का नाम — जैसे सुरेश रामलाल',
+  dono: 'मतदाता का नाम लिखें — जैसे सुरेश (पिता/पति का नाम नीचे)',
 };
+export const REL_PLACEHOLDER = 'पिता/पति का नाम — जैसे रामलाल / ramlal';
 
 export const defaultState = {
   q: '',
+  q2: '',
   smode: 'naam',
   ward: '',
   moh: '',
@@ -145,6 +147,29 @@ export function parseQuery(q) {
   return out;
 }
 
+/**
+ * Build the match-token list for the active mode. Each name-token gets an `f`
+ * field telling scoreRec which name column it must match:
+ *   'n' → मतदाता का नाम      'r' → पिता/पति का नाम      'b' → दोनों में से कोई
+ * "dono" mode shows two boxes (q = मतदाता का नाम, q2 = पिता/पति का नाम); जब दूसरा
+ * खाली हो तो अकेला नाम दोनों कॉलम में ढूँढा जाता है (पुराना व्यवहार)।
+ */
+export function buildTokens(S) {
+  const mode = S.smode || 'naam';
+  const out = [];
+  const add = (arr, f) => arr.forEach((k) => out.push({ ...k, f }));
+  if (mode === 'pita') {
+    add(parseQuery(S.q), 'r');
+  } else if (mode === 'dono') {
+    const two = !!(S.q2 && S.q2.trim());
+    add(parseQuery(S.q), two ? 'n' : 'b');
+    if (two) add(parseQuery(S.q2), 'r');
+  } else {
+    add(parseQuery(S.q), 'n');
+  }
+  return out;
+}
+
 function rawBoost(raw, words) {
   let b = 0;
   for (const w of words) {
@@ -156,22 +181,23 @@ function rawBoost(raw, words) {
 
 /**
  * Returns { s, mn } — s = 0 means "no match".
- * smode decides which name field a word is matched against:
- *   naam  → मतदाता का नाम (fa adds a fallback on पिता/पति का नाम)
- *   pita  → सिर्फ़ पिता/पति का नाम
- *   dono  → दोनों में से किसी भी एक (हर शब्द का मेल ज़रूरी)
+ * Har name-token ka `f` तय करता है कि वह किस कॉलम से मेल खाए:
+ *   'r' → सिर्फ़ पिता/पति का नाम
+ *   'n' → मतदाता का नाम (fa हो तो पिता/पति पर हल्का fallback)
+ *   'b' → दोनों में से किसी भी एक
+ * हर शब्द का मेल ज़रूरी है (AND)।
  */
-function scoreRec(r, toks, smode, fa) {
+function scoreRec(r, toks, fa) {
   let total = 0;
   let mn = 999;
   for (const k of toks) {
     let s = 0;
     if (k.t === 'house') s = r.h === k.v ? 120 : r.h.startsWith(k.v) ? 60 : 0;
     else if (k.t === 'epic') s = r.ek.includes(k.v) ? 120 : 0;
-    else if (smode === 'pita') {
+    else if (k.f === 'r') {
       s = bestScore(k.v, r.rw);
       if (s) s += rawBoost(k.raw, r.rr);
-    } else if (smode === 'dono') {
+    } else if (k.f === 'b') {
       const sn = bestScore(k.v, r.nw);
       const sr = bestScore(k.v, r.rw);
       s = Math.max(sn, sr);
@@ -212,7 +238,7 @@ function baseFilter(DATA, S, skipWard) {
 /** Full run: returns results, per-ward counts and match set. */
 export function run(ctx, S) {
   const { DATA, FAM } = ctx;
-  const toks = parseQuery(S.q);
+  const toks = buildTokens(S);
   let list = baseFilter(DATA, S, false);
   let wardPool = baseFilter(DATA, S, true);
 
@@ -220,7 +246,7 @@ export function run(ctx, S) {
     const scan = (arr) => {
       const hit = [];
       for (const r of arr) {
-        const { s, mn } = scoreRec(r, toks, S.smode, S.fa);
+        const { s, mn } = scoreRec(r, toks, S.fa);
         if (s) hit.push([r, s, mn]);
       }
       const strict = hit.filter((h) => h[2] >= 60);
@@ -278,25 +304,31 @@ export function run(ctx, S) {
   return { toks, RES, wardCnt, NOHOUSE, MATCH };
 }
 
-/** Name suggestions for the search bar dropdown. */
-export function suggest(ctx, S) {
+/**
+ * Name suggestions for a search box. `side` picks which box is being typed:
+ *   'n' → मतदाता का नाम (q)      'r' → पिता/पति का नाम (pita mode या dono का दूसरा box)
+ * बाक़ी सभी तोकन AND-फ़िल्टर की तरह लगाए जाते हैं, ताकि दो-नाम वाली खोज में
+ * सुझाव उसी व्यक्ति के हों जिसमें दूसरा नाम भी मिलता हो।
+ */
+export function suggest(ctx, S, side = 'n') {
   const { DATA } = ctx;
-  const toks = parseQuery(S.q).filter((k) => k.t === 'name');
-  if (!toks.length) return [];
+  const isRel = side === 'r';
+  const ownQ = isRel ? (S.q2 || '') : (S.q || '');
+  const own = parseQuery(ownQ).filter((k) => k.t === 'name');
+  if (!own.length) return [];
 
-  const smode = S.smode || 'naam';
-  // Which name(s) a suggestion should offer, depending on the active mode.
-  const namesOf = (r) => (smode === 'pita' ? [r.rn] : smode === 'dono' ? [r.n, r.rn] : [r.n]);
+  const toks = buildTokens(S);
+  const namesOf = (r) => [isRel ? r.rn : r.n].filter(Boolean);
 
   const pool = baseFilter(DATA, S, false);
   const map = new Map();
   let anyStrict = 0;
   for (const r of pool) {
-    const { s, mn } = scoreRec(r, toks, smode, false);
+    const { s, mn } = scoreRec(r, toks, false);
     if (s && mn >= 60) { anyStrict++; if (anyStrict >= 10) break; }
   }
   for (const r of pool) {
-    const { s, mn } = scoreRec(r, toks, smode, false);
+    const { s, mn } = scoreRec(r, toks, false);
     if (!s) continue;
     if (anyStrict >= 10 && mn < 60) continue;
     for (const nm of namesOf(r)) {

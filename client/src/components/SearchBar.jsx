@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { highlightWords } from '../lib/format.js';
 
-export default function SearchBar({ value, onChange, onPick, suggestions, qWords, placeholder }) {
+export default function SearchBar({ value, onChange, onPick, suggestions, qWords, placeholder, shortcut = true }) {
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(-1);
   const inputRef = useRef(null);
@@ -37,8 +37,9 @@ export default function SearchBar({ value, onChange, onPick, suggestions, qWords
     setOpen(!!e.target.value);
   }
 
-  // global "/" shortcut
+  // global "/" shortcut (सिर्फ़ पहला search box)
   useEffect(() => {
+    if (!shortcut) return undefined;
     function onDoc(e) {
       if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) {
         e.preventDefault();
@@ -47,7 +48,7 @@ export default function SearchBar({ value, onChange, onPick, suggestions, qWords
     }
     document.addEventListener('keydown', onDoc);
     return () => document.removeEventListener('keydown', onDoc);
-  }, []);
+  }, [shortcut]);
 
   return (
     <div className="sb">
