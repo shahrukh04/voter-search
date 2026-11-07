@@ -53,7 +53,8 @@ export default function SearchPage({ onOpenAdmin }) {
     return () => { alive = false; };
   }, [fetchData]);
 
-  // पेज रीफ़्रेश — पूरी वेबसाइट reload किए बिना सिर्फ़ डेटा दोबारा लाता है
+  // रीफ़्रेश — सारे फ़िल्टर/खोज हटाकर डेटा दोबारा लाता है (अकेले नतीजे से बाहर
+  // निकलने का आसान तरीका), और पूरी वेबसाइट reload करने की ज़रूरत नहीं पड़ती।
   const refresh = useCallback(async () => {
     if (refreshing) return;
     setRefreshing(true);
@@ -62,8 +63,11 @@ export default function SearchPage({ onOpenAdmin }) {
       setRawVoters(d.voters);
       setEdits(d.edits);
       setLoadErr('');
+      setS((s) => ({ ...defaultState, view: s.view }));
       setPage(0);
-      toast('✓ डेटा रीफ़्रेश हुआ');
+      setPanelOpen(false);
+      setModal(null);
+      toast('✓ सारे फ़िल्टर हटे — पूरा डेटा दिख रहा है');
     } catch (ex) {
       toast('⚠ रीफ़्रेश नहीं हो सका — सर्वर जाँचें');
     } finally {
@@ -291,7 +295,7 @@ export default function SearchPage({ onOpenAdmin }) {
             <div className="bar">
               <span className="cnt">{fmt(RES.length)}{fam ? ' परिवार' : ' परिणाम'}{RES.length > per ? ` · पेज ${cur + 1}/${pages}` : ''}</span>
               <div className="mact">
-                <button className="btn sm" onClick={refresh} disabled={refreshing} title="डेटा दोबारा लाएँ (पूरी वेबसाइट reload नहीं)">
+                <button className="btn sm" onClick={refresh} disabled={refreshing} title="सारे फ़िल्टर/खोज हटाकर पूरा डेटा दोबारा लाएँ (पूरी वेबसाइट reload नहीं)">
                   <span className={'ric' + (refreshing ? ' spin' : '')}>↻</span>{refreshing ? ' रीफ़्रेश…' : ' रीफ़्रेश'}
                 </button>
                 <button className="btn sm" onClick={() => setModal({ type: 'edits' })}>
