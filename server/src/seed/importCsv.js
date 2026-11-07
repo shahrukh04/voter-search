@@ -19,6 +19,7 @@ const Voter = require('../models/Voter');
  *   B  क्रम संख्या, EPIC, नाम, संबंध, पिता/पति/माता का नाम, मकान, आयु, लिंग, मोहल्ला, नामावली का प्रकार, स्थिति
  *   C  serial_no, voter_id, name, relation_type, relation_name, house_no, age, gender, locality, status, list_source
  *   D  Serial_No, Voter_ID_EPIC, Name, Relation_Type, Relation_Name, House_No, Age, Gender, Gali, List, Status
+ *   E  वार्ड, क्रम संख्या, EPIC, नाम, संबंध प्रकार, संबंधी का नाम, मकान संख्या, आयु, लिंग, मोहल्ला/गली, स्थिति, स्रोत, OCR जाँच
  */
 
 /** Ward number → column offsets for each supported header layout. */
@@ -27,14 +28,16 @@ const LAYOUTS = {
   B: { serial: 0, epic: 1, name: 2, rel: 3, rn: 4, house: 5, age: 6, gender: 7, m: 8, list: 9, status: 10 },
   C: { serial: 0, epic: 1, name: 2, rel: 3, rn: 4, house: 5, age: 6, gender: 7, m: 8, status: 9, list: 10 },
   D: { serial: 0, epic: 1, name: 2, rel: 3, rn: 4, house: 5, age: 6, gender: 7, m: 8, list: 9, status: 10 },
+  E: { serial: 1, epic: 2, name: 3, rel: 4, rn: 5, house: 6, age: 7, gender: 8, m: 9, status: 10, list: 11 },
 };
 
 function detectLayout(header) {
   const sig = header.join('|').toLowerCase();
   if (sig.includes('सूची भाग')) return 'A';
   if (sig.includes('नामावली का प्रकार')) return 'B';
-  if (sig.includes('list_source')) return 'C';
+  if (sig.includes('list_source') || sig.includes('epic_no')) return 'C';
   if (sig.includes('voter_id_epic') || (sig.includes('serial') && sig.includes('gali'))) return 'D';
+  if (sig.includes('ocr')) return 'E';
   throw new Error('unrecognised CSV header -> ' + header.join(', '));
 }
 
