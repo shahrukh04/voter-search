@@ -18,6 +18,8 @@ import EditsModal from '../components/EditsModal.jsx';
 export default function SearchPage({ onOpenAdmin }) {
   const { user } = useAuth();
   const toast = useToast();
+  // क्रमांक/वार्ड सुधारने का विकल्प केवल एडमिन को दिखता है।
+  const isAdmin = user?.role === 'admin';
 
   const [rawVoters, setRawVoters] = useState(null);
   const [edits, setEdits] = useState({});
@@ -298,7 +300,7 @@ export default function SearchPage({ onOpenAdmin }) {
                 <button className="btn sm" onClick={refresh} disabled={refreshing} title="सारे फ़िल्टर/खोज हटाकर पूरा डेटा दोबारा लाएँ (पूरी वेबसाइट reload नहीं)">
                   <span className={'ric' + (refreshing ? ' spin' : '')}>↻</span>{refreshing ? ' रीफ़्रेश…' : ' रीफ़्रेश'}
                 </button>
-                <button className="btn sm" onClick={() => setModal({ type: 'edits' })}>
+                <button className="btn sm" onClick={() => setModal({ type: 'edits' })} hidden={!isAdmin}>
                   ✎ सुधार{Object.keys(edits).length ? <b className="bdg">{Object.keys(edits).length}</b> : null}
                 </button>
                 <button className="btn sm" onClick={() => exportCSV(S, RES)}>⬇ CSV</button>
@@ -386,10 +388,12 @@ export default function SearchPage({ onOpenAdmin }) {
         <button className={S.view === 'family' && !panelOpen ? 'on' : ''} onClick={() => { setPanelOpen(false); setView('family'); }}>
           <span className="ic">🏠</span>परिवार
         </button>
-        <button className={modal && modal.type === 'edits' ? 'on' : ''} onClick={() => { setModal({ type: 'edits' }); }}>
-          <span className="ic">✎</span>सुधार
-          {Object.keys(edits).length ? <i className="badge">{Object.keys(edits).length}</i> : null}
-        </button>
+        {isAdmin ? (
+          <button className={modal && modal.type === 'edits' ? 'on' : ''} onClick={() => { setModal({ type: 'edits' }); }}>
+            <span className="ic">✎</span>सुधार
+            {Object.keys(edits).length ? <i className="badge">{Object.keys(edits).length}</i> : null}
+          </button>
+        ) : null}
         <button className={panelOpen ? 'on' : ''} onClick={() => setPanelOpen((o) => !o)}>
           <span className="ic">⚙️</span>फ़िल्टर
           {countFilters(S) ? <i className="badge">{countFilters(S)}</i> : null}
@@ -422,6 +426,7 @@ export default function SearchPage({ onOpenAdmin }) {
           onEditSave={saveEdit}
           onResetEdit={resetEdit}
           onShowFamily={showFamilyFor}
+          canEdit={isAdmin}
           toast={toast}
         />
       ) : null}

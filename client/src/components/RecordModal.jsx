@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { copyText, gc, highlightWords, ini, recLine, wa } from '../lib/format.js';
 import { MemLi } from './FamilyCard.jsx';
 
-export default function RecordModal({ r, others, qWords, fa, wards, onClose, onOpenRecord, onEditSave, onResetEdit, onShowFamily, toast }) {
+export default function RecordModal({ r, others, qWords, fa, wards, onClose, onOpenRecord, onEditSave, onResetEdit, onShowFamily, canEdit = false, toast }) {
   const [editing, setEditing] = useState(false);
   const [edS, setEdS] = useState(r.s);
   const [edW, setEdW] = useState(r.w);
@@ -47,36 +47,40 @@ export default function RecordModal({ r, others, qWords, fa, wards, onClose, onO
           </div>
         </div>
 
-        <div className={'edf' + (editing ? ' show' : '')}>
-          <div className="edr">
-            <label>क्रमांक<input inputMode="numeric" value={edS} onChange={(e) => setEdS(e.target.value)} /></label>
-            <label>
-              वार्ड
-              <select value={edW} onChange={(e) => setEdW(e.target.value)}>
-                {wardOpts.map((w) => <option key={w} value={w}>वार्ड {w}</option>)}
-              </select>
-            </label>
+        {canEdit ? (
+          <div className={'edf' + (editing ? ' show' : '')}>
+            <div className="edr">
+              <label>क्रमांक<input inputMode="numeric" value={edS} onChange={(e) => setEdS(e.target.value)} /></label>
+              <label>
+                वार्ड
+                <select value={edW} onChange={(e) => setEdW(e.target.value)}>
+                  {wardOpts.map((w) => <option key={w} value={w}>वार्ड {w}</option>)}
+                </select>
+              </label>
+            </div>
+            {r.ed ? <small className="orig">मूल: वार्ड {r.w0} · क्रमांक {r.s0}</small> : null}
+            <div className="mact">
+              <button
+                className="btn gold sm"
+                onClick={() => {
+                  if (!edS.trim()) { toast('क्रमांक खाली नहीं हो सकता'); return; }
+                  onEditSave(r.i, +edW, edS.trim());
+                  setEditing(false);
+                }}
+              >✓ सेव करें</button>
+              <button className="btn sm" onClick={() => { setEdS(r.s); setEdW(r.w); setEditing(false); }}>रद्द</button>
+              {r.ed ? (
+                <button className="btn sm" onClick={() => { onResetEdit(r.i); setEditing(false); }}>↺ मूल मान</button>
+              ) : null}
+            </div>
+            <small className="orig">सुधार हर जगह (खोज, परिवार, प्रिंट, CSV) बदल जाएगा।</small>
           </div>
-          {r.ed ? <small className="orig">मूल: वार्ड {r.w0} · क्रमांक {r.s0}</small> : null}
-          <div className="mact">
-            <button
-              className="btn gold sm"
-              onClick={() => {
-                if (!edS.trim()) { toast('क्रमांक खाली नहीं हो सकता'); return; }
-                onEditSave(r.i, +edW, edS.trim());
-                setEditing(false);
-              }}
-            >✓ सेव करें</button>
-            <button className="btn sm" onClick={() => { setEdS(r.s); setEdW(r.w); setEditing(false); }}>रद्द</button>
-            {r.ed ? (
-              <button className="btn sm" onClick={() => { onResetEdit(r.i); setEditing(false); }}>↺ मूल मान</button>
-            ) : null}
-          </div>
-          <small className="orig">सुधार हर जगह (खोज, परिवार, प्रिंट, CSV) बदल जाएगा।</small>
-        </div>
+        ) : null}
 
         <div className="mact">
-          <button className="btn" onClick={() => { setEditing((v) => !v); setEdS(r.s); setEdW(r.w); }}>✏️ क्रमांक / वार्ड सुधारें</button>
+          {canEdit ? (
+            <button className="btn" onClick={() => { setEditing((v) => !v); setEdS(r.s); setEdW(r.w); }}>✏️ क्रमांक / वार्ड सुधारें</button>
+          ) : null}
           <button className="btn" onClick={() => copyText(recLine(r)).then(() => toast('✓ कॉपी हो गया'))}>📋 कॉपी</button>
           <button className="btn" onClick={() => wa(recLine(r))}>💬 शेयर</button>
           {others.length ? (

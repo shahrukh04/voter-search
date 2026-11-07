@@ -1,7 +1,7 @@
 const express = require('express');
 const Voter = require('../models/Voter');
 const Edit = require('../models/Edit');
-const { authRequired } = require('../middleware/auth');
+const { authRequired, adminRequired } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -21,7 +21,8 @@ router.get('/', authRequired, async (_req, res) => {
 });
 
 // PUT /api/edits  body: { edits: { "<i>": {n,w,s} } }  -> replaces the whole set
-router.put('/', authRequired, async (req, res) => {
+// क्रमांक/वार्ड सुधार केवल एडमिन बदल सकता है।
+router.put('/', authRequired, adminRequired, async (req, res) => {
   try {
     const incoming = (req.body && req.body.edits) || {};
     const keys = Object.keys(incoming);
@@ -55,8 +56,8 @@ router.put('/', authRequired, async (req, res) => {
   }
 });
 
-// DELETE /api/edits -> clear all corrections
-router.delete('/', authRequired, async (_req, res) => {
+// DELETE /api/edits -> clear all corrections (एडमिन के लिए)
+router.delete('/', authRequired, adminRequired, async (_req, res) => {
   try {
     await Edit.deleteMany({});
     res.json({ ok: true, count: 0 });
