@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import { downloadFile } from '../lib/format.js';
 
-export default function EditsModal({ edits, DATA, onClose, onRestore, onClearAll, toast }) {
+export default function EditsModal({ edits, byId, onClose, onRestore, onClearAll, toast }) {
   const fileRef = useRef(null);
-  const ids = Object.keys(edits).map(Number).filter((i) => DATA[i]);
+  const ids = Object.keys(edits).map(Number).filter((i) => byId(i));
 
   const backup = () => {
     downloadFile('jaliya_sudhar_backup.json', JSON.stringify({ v: 1, edits }), 'application/json');
@@ -44,7 +44,7 @@ export default function EditsModal({ edits, DATA, onClose, onRestore, onClearAll
 
         <ul className="mem">
           {ids.length ? ids.map((i) => {
-            const r = DATA[i];
+            const r = byId(i);
             return (
               <li key={i} style={{ display: 'flex', cursor: 'default' }}>
                 <span className="msn">{r.s}</span>

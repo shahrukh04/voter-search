@@ -120,7 +120,7 @@ export default function SearchPage({ onOpenAdmin }) {
     return `${fmt(ctx.FAMCOUNT)} परिवार / मकान`;
   }, [ctx, S.view]);
 
-  const active = modal && modal.type === 'record' ? ctx && ctx.DATA[modal.i] : null;
+  const active = modal && modal.type === 'record' ? ctx && ctx.BYI.get(modal.i) : null;
 
   /* ---------- edit persistence ---------- */
   const persist = useCallback(async (next) => {
@@ -133,7 +133,7 @@ export default function SearchPage({ onOpenAdmin }) {
   }, [toast]);
 
   const saveEdit = useCallback((i, w, s) => {
-    const r = ctx.DATA[i];
+    const r = ctx.BYI.get(i);
     const next = { ...edits };
     if (+w === r.w0 && String(s) === r.s0) delete next[i];
     else next[i] = { n: r.n, w: +w, s: String(s) };
@@ -154,7 +154,7 @@ export default function SearchPage({ onOpenAdmin }) {
     for (const k of Object.keys(obj || {})) {
       const e = obj[k];
       const i = +k;
-      const r = ctx.DATA[i];
+      const r = ctx.BYI.get(i);
       if (r && e && e.n === r.n && Number.isInteger(+e.w) && +e.w >= 1 && +e.w <= 99 && String(e.s).trim()) {
         clean[i] = { n: r.n, w: +e.w, s: String(e.s).trim() };
         n++;
@@ -405,7 +405,7 @@ export default function SearchPage({ onOpenAdmin }) {
       {modal && modal.type === 'edits' ? (
         <EditsModal
           edits={edits}
-          DATA={ctx.DATA}
+          byId={(i) => ctx.BYI.get(i)}
           onClose={() => setModal(null)}
           onRestore={restoreEdits}
           onClearAll={clearAllEdits}

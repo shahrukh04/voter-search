@@ -74,6 +74,10 @@ export const isSupList = (r) => !!r.l && !r.l.includes('मूल');
 /** Enrich the raw records and build the family index. */
 export function prepare(rawRecords, edits = {}) {
   const DATA = rawRecords.map((rec, index) => ({ ...rec, i: rec.i ?? index }));
+  // i से record ढूँढने के लिए नक्शा — कुछ wards में i सरणी-स्थान (array index) के
+  // बराबर नहीं होता, इसलिए DATA[i] पर भरोसा नहीं किया जा सकता।
+  const BYI = new Map();
+  DATA.forEach((r) => BYI.set(r.i, r));
 
   // Apply corrections (क्रमांक / वार्ड सुधार)
   DATA.forEach((r) => {
@@ -125,7 +129,7 @@ export function prepare(rawRecords, edits = {}) {
     f.hn = isNaN(hn) ? 999999 : hn;
   });
 
-  return { DATA, FAM, WARDS, ACT: DATA.filter((r) => !r.d).length, FAMCOUNT: FAM.size };
+  return { DATA, BYI, FAM, WARDS, ACT: DATA.filter((r) => !r.d).length, FAMCOUNT: FAM.size };
 }
 
 /* ---------- query parsing ---------- */
