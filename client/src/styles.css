@@ -194,6 +194,13 @@ mark{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px;animat
 .fc.open .expand i{transform:rotate(180deg)}
 .fa{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 16px}
 .more{text-align:center;margin:20px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pager{display:flex;align-items:center;justify-content:center;gap:14px;margin:22px 0;flex-wrap:wrap}
+.pgtxt{font-size:13.5px;color:var(--mut);font-weight:700;text-align:center;min-width:130px}
+.pgtxt b{color:var(--accent);font-size:15px}
+.pgtxt small{display:block;font-weight:500;opacity:.9}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.ric{display:inline-block;line-height:1}
+.ric.spin{animation:spin 1s linear infinite}
 .empty{background:var(--card);border:2px dashed var(--line);border-radius:26px;padding:44px 20px;text-align:center;color:var(--mut)}
 .empty .em{font-size:52px;display:inline-block;animation:float 3.5s ease-in-out infinite}
 .empty h3{margin:8px 0 4px;color:var(--accent)}
@@ -311,7 +318,7 @@ footer{color:var(--mut);font-size:12.5px;text-align:center;padding:6px 18px 30px
 .adm .fld{margin-bottom:10px}
 
 @media print{
-  .hero,.stickybar,.panel,.tabbar,.scrim,.more,.stats,.bar .btn,footer,.modal,.toast,.fa,.expand{display:none!important}
+  .hero,.stickybar,.panel,.tabbar,.scrim,.more,.pager,.stats,.bar .btn,footer,.modal,.toast,.fa,.expand{display:none!important}
   body{background:#fff;color:#000}.layout{display:block}
   .grid,.grid.f{grid-template-columns:1fr 1fr}
   .vc,.fc{box-shadow:none;break-inside:avoid;animation:none}

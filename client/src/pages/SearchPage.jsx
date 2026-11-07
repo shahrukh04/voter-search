@@ -23,7 +23,9 @@ export default function SearchPage({ onOpenAdmin }) {
   const [edits, setEdits] = useState({});
   const [loadErr, setLoadErr] = useState('');
   const [S, setS] = useState(defaultState);
-  const [shown, setShown] = useState(PAGE_V);
+  const [page, setPage] = useState(0); // 0-based वर्तमान पेज
+  const [printAll, setPrintAll] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [modal, setModal] = useState(null); // {type:'record', i} | {type:'edits'}
   const [sugList, setSugList] = useState([]);
@@ -31,20 +33,43 @@ export default function SearchPage({ onOpenAdmin }) {
   const sugTimer = useRef(null);
 
   /* ---------- load data ---------- */
+  const fetchData = useCallback(async () => {
+    const [v, e] = await Promise.all([api.getVoters(), api.getEdits()]);
+    return { voters: v.voters || [], edits: e.edits || {} };
+  }, []);
+
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const [v, e] = await Promise.all([api.getVoters(), api.getEdits()]);
+        const d = await fetchData();
         if (!alive) return;
-        setRawVoters(v.voters || []);
-        setEdits(e.edits || {});
+        setRawVoters(d.voters);
+        setEdits(d.edits);
       } catch (ex) {
         if (alive) setLoadErr('डेटा लोड नहीं हो सका — सर्वर कनेक्शन जाँचें।');
       }
     })();
     return () => { alive = false; };
-  }, []);
+  }, [fetchData]);
+
+  // पेज रीफ़्रेश — पूरी वेबसाइट reload किए बिना सिर्फ़ डेटा दोबारा लाता है
+  const refresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      const d = await fetchData();
+      setRawVoters(d.voters);
+      setEdits(d.edits);
+      setLoadErr('');
+      setPage(0);
+      toast('✓ डेटा रीफ़्रेश हुआ');
+    } catch (ex) {
+      toast('⚠ रीफ़्रेश नहीं हो सका — सर्वर जाँचें');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchData, refreshing, toast]);
 
   const ctx = useMemo(() => (rawVoters ? prepare(rawVoters, edits) : null), [rawVoters, edits]);
 
@@ -65,9 +90,9 @@ export default function SearchPage({ onOpenAdmin }) {
     return Object.keys(c).sort().map((k) => [k, c[k]]);
   }, [ctx, S.ward]);
 
-  // reset pagination whenever the result set or the view changes
+  // result/व्यू बदलने पर पहले पेज पर लौटें
   useEffect(() => {
-    setShown(S.view === 'family' ? PAGE_F : PAGE_V);
+    setPage(0);
   }, [RES, S.view]);
 
   // debounced suggestions
@@ -169,9 +194,9 @@ export default function SearchPage({ onOpenAdmin }) {
   }, [ctx]);
 
   const handlePrint = useCallback(() => {
-    setShown(RES.length);
-    setTimeout(() => window.print(), 60);
-  }, [RES]);
+    setPrintAll(true);
+    setTimeout(() => { window.print(); setPrintAll(false); }, 80);
+  }, []);
 
   if (loadErr) {
     return (
@@ -191,8 +216,11 @@ export default function SearchPage({ onOpenAdmin }) {
     );
   }
 
-  const visible = RES.slice(0, shown);
   const fam = S.view === 'family';
+  const per = fam ? PAGE_F : PAGE_V;
+  const pages = Math.max(1, Math.ceil(RES.length / per));
+  const cur = Math.min(page, pages - 1);
+  const visible = printAll ? RES : RES.slice(cur * per, cur * per + per);
 
   return (
     <>
@@ -261,8 +289,11 @@ export default function SearchPage({ onOpenAdmin }) {
             <Stats view={S.view} RES={RES} />
 
             <div className="bar">
-              <span className="cnt">{fmt(RES.length)}{fam ? ' परिवार' : ' परिणाम'}{shown < RES.length ? ` (पहले ${shown} दिख रहे हैं)` : ''}</span>
+              <span className="cnt">{fmt(RES.length)}{fam ? ' परिवार' : ' परिणाम'}{RES.length > per ? ` · पेज ${cur + 1}/${pages}` : ''}</span>
               <div className="mact">
+                <button className="btn sm" onClick={refresh} disabled={refreshing} title="डेटा दोबारा लाएँ (पूरी वेबसाइट reload नहीं)">
+                  <span className={'ric' + (refreshing ? ' spin' : '')}>↻</span>{refreshing ? ' रीफ़्रेश…' : ' रीफ़्रेश'}
+                </button>
                 <button className="btn sm" onClick={() => setModal({ type: 'edits' })}>
                   ✎ सुधार{Object.keys(edits).length ? <b className="bdg">{Object.keys(edits).length}</b> : null}
                 </button>
@@ -314,12 +345,26 @@ export default function SearchPage({ onOpenAdmin }) {
               </div>
             )}
 
-            {shown < RES.length ? (
-              <div className="more">
-                <button className="btn pri" onClick={() => setShown((s) => s + (fam ? PAGE_F : PAGE_V))}>
-                  और {Math.min(fam ? PAGE_F : PAGE_V, RES.length - shown)} दिखाएँ ↓
+            {RES.length > per ? (
+              <div className="pager">
+                <button
+                  className="btn"
+                  disabled={cur === 0}
+                  onClick={() => { setPage(Math.max(0, cur - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                >
+                  ← पिछला
                 </button>
-                <button className="btn" onClick={() => setShown(RES.length)}>सभी {fmt(RES.length)} दिखाएँ</button>
+                <span className="pgtxt">
+                  पेज <b>{cur + 1}</b> / {pages}
+                  <small>· {fmt(cur * per + 1)}–{fmt(Math.min(RES.length, (cur + 1) * per))} दिख रहे हैं</small>
+                </span>
+                <button
+                  className="btn pri"
+                  disabled={cur >= pages - 1}
+                  onClick={() => { setPage(Math.min(pages - 1, cur + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                >
+                  अगला →
+                </button>
               </div>
             ) : null}
           </section>

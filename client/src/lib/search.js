@@ -5,8 +5,8 @@
  */
 import { ALIAS, bestScore, rawN, skelWord, skelWords, toAscii } from './hindi.js';
 
-export const PAGE_V = 60;
-export const PAGE_F = 18;
+export const PAGE_V = 30;
+export const PAGE_F = 30;
 
 export const SORTS = {
   voters: [
