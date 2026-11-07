@@ -70,6 +70,13 @@ input,select{font:inherit;color:var(--ink)}
 .wc:hover{background:rgba(255,255,255,.18)}
 .wc.on{background:linear-gradient(135deg,#f6dd8c,#c79a1f);color:#2b1673;border-color:transparent;font-weight:800;box-shadow:0 5px 16px rgba(199,154,31,.45);transform:translateY(-1px)}
 
+/* search-mode chips (नाम से / पिता-पति से / दोनों) */
+.modes{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.modes::-webkit-scrollbar{display:none}
+.modes .mlab{flex:none;font-size:12px;font-weight:700;color:#cbbdf5}
+.modes .wc{font-size:12.5px;padding:5px 12px}
+.modes+.wards{padding-top:6px}
+
 /* ---------- layout ---------- */
 main{padding:18px 0 110px}
 .layout{display:block}

@@ -16,7 +16,7 @@ export default function Filters({ S, setS, mohallaOpts, resultCount, open, onClo
   const nFilters =
     ['ward', 'moh', 'g', 'rel', 'h', 'l', 'e'].filter((k) => S[k] !== '').length +
     (S.amin !== '' || S.amax !== '' ? 1 : 0) +
-    (S.dup ? 1 : 0) + (S.del ? 1 : 0) + (S.fa ? 1 : 0);
+    (S.dup ? 1 : 0) + (S.del ? 1 : 0) + (S.fa && S.smode === 'naam' ? 1 : 0);
 
   return (
     <aside className={'panel' + (open ? ' open' : '')}>
@@ -86,7 +86,9 @@ export default function Filters({ S, setS, mohallaOpts, resultCount, open, onClo
         </select>
       </label>
 
-      <label className="chk"><input type="checkbox" checked={S.fa} onChange={(e) => set({ fa: e.target.checked })} /> पिता/पति के नाम में भी खोजें</label>
+      {S.smode === 'naam' ? (
+        <label className="chk"><input type="checkbox" checked={S.fa} onChange={(e) => set({ fa: e.target.checked })} /> पिता/पति के नाम में भी खोजें</label>
+      ) : null}
       <label className="chk"><input type="checkbox" checked={S.dup} onChange={(e) => set({ dup: e.target.checked })} /> सिर्फ़ संभावित दोहराव वाले नाम</label>
       <label className="chk"><input type="checkbox" checked={S.del} onChange={(e) => set({ del: e.target.checked })} /> हटाए गए (विलोपित) नाम भी दिखाएँ</label>
 

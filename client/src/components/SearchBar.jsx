@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { highlightWords } from '../lib/format.js';
 
-export default function SearchBar({ value, onChange, onPick, suggestions, qWords }) {
+export default function SearchBar({ value, onChange, onPick, suggestions, qWords, placeholder }) {
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(-1);
   const inputRef = useRef(null);
@@ -61,7 +61,7 @@ export default function SearchBar({ value, onChange, onPick, suggestions, qWords
         autoComplete="off"
         spellCheck="false"
         enterKeyHint="search"
-        placeholder="नाम लिखें — मात्रा की चिंता नहीं: रमेश / ramesh / 145"
+        placeholder={placeholder || 'नाम लिखें — मात्रा की चिंता नहीं: रमेश / ramesh / 145'}
         value={value}
         onChange={handleChange}
         onKeyDown={onKeyDown}

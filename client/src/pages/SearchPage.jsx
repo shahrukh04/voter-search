@@ -3,7 +3,7 @@ import { api } from '../lib/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { exportCSV, fmt } from '../lib/format.js';
-import { defaultState, houseKey, PAGE_F, PAGE_V, parseQuery, prepare, run, suggest } from '../lib/search.js';
+import { defaultState, houseKey, PAGE_F, PAGE_V, parseQuery, prepare, run, SMODE_PLACEHOLDER, SMODES, suggest } from '../lib/search.js';
 
 import Header from '../components/Header.jsx';
 import SearchBar from '../components/SearchBar.jsx';
@@ -201,12 +201,25 @@ export default function SearchPage({ onOpenAdmin }) {
               onPick={(n) => setS((s) => ({ ...s, q: n }))}
               suggestions={sugList}
               qWords={qWords}
+              placeholder={SMODE_PLACEHOLDER[S.smode] || SMODE_PLACEHOLDER.naam}
             />
             <div className="seg" data-on={S.view}>
               <span className="pill" />
               <button className={S.view === 'voters' ? 'on' : ''} onClick={() => setView('voters')}>🗳 मतदाता</button>
               <button className={S.view === 'family' ? 'on' : ''} onClick={() => setView('family')}>🏠 परिवार</button>
             </div>
+          </div>
+          <div className="modes">
+            <span className="mlab">कहाँ खोजें:</span>
+            {SMODES.map(([v, t]) => (
+              <button
+                key={v}
+                className={'wc' + (S.smode === v ? ' on' : '')}
+                onClick={() => setS((s) => ({ ...s, smode: v }))}
+              >
+                {t}
+              </button>
+            ))}
           </div>
           <WardChips wards={ctx.WARDS} active={S.ward} counts={wardCnt} onPick={(w) => setS((s) => ({ ...s, ward: w, moh: '' }))} />
         </div>
@@ -272,6 +285,7 @@ export default function SearchPage({ onOpenAdmin }) {
                       k={i}
                       qWords={qWords}
                       fa={S.fa}
+                      smode={S.smode}
                       onOpen={(idx) => setModal({ type: 'record', i: idx })}
                       onHouse={showVotersForHouse}
                     />
@@ -350,6 +364,6 @@ function countFilters(S) {
   return (
     ['ward', 'moh', 'g', 'rel', 'h', 'l', 'e'].filter((k) => S[k] !== '').length +
     (S.amin !== '' || S.amax !== '' ? 1 : 0) +
-    (S.dup ? 1 : 0) + (S.del ? 1 : 0) + (S.fa ? 1 : 0)
+    (S.dup ? 1 : 0) + (S.del ? 1 : 0) + (S.fa && S.smode === 'naam' ? 1 : 0)
   );
 }

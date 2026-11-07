@@ -26,8 +26,21 @@ export const SORTS = {
   ],
 };
 
+/** Search modes: which name fields the typed words are matched against. */
+export const SMODES = [
+  ['naam', 'नाम से'],
+  ['pita', 'पिता/पति से'],
+  ['dono', 'नाम + पिता/पति'],
+];
+export const SMODE_PLACEHOLDER = {
+  naam: 'नाम लिखें — मात्रा की चिंता नहीं: रमेश / ramesh / 145',
+  pita: 'पिता/पति का नाम लिखें — जैसे रामलाल / ramlal',
+  dono: 'नाम और साथ में पिता/पति का नाम — जैसे सुरेश रामलाल',
+};
+
 export const defaultState = {
   q: '',
+  smode: 'naam',
   ward: '',
   moh: '',
   g: '',
@@ -75,6 +88,7 @@ export function prepare(rawRecords, edits = {}) {
     r.nw = skelWords(r.n);
     r.rw = skelWords(r.rn);
     r.nr = rawN(r.n).split(/[\s,.\-/]+/).filter(Boolean);
+    r.rr = rawN(r.rn).split(/[\s,.\-/]+/).filter(Boolean);
     r.ek = (r.e || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     r.fp = [r.n, r.rn, r.a, r.g].join('|');
     if (!r.d) {
@@ -140,15 +154,29 @@ function rawBoost(raw, words) {
   return b;
 }
 
-/** Returns { s, mn } — s = 0 means "no match". */
-function scoreRec(r, toks, fa) {
+/**
+ * Returns { s, mn } — s = 0 means "no match".
+ * smode decides which name field a word is matched against:
+ *   naam  → मतदाता का नाम (fa adds a fallback on पिता/पति का नाम)
+ *   pita  → सिर्फ़ पिता/पति का नाम
+ *   dono  → दोनों में से किसी भी एक (हर शब्द का मेल ज़रूरी)
+ */
+function scoreRec(r, toks, smode, fa) {
   let total = 0;
   let mn = 999;
   for (const k of toks) {
     let s = 0;
     if (k.t === 'house') s = r.h === k.v ? 120 : r.h.startsWith(k.v) ? 60 : 0;
     else if (k.t === 'epic') s = r.ek.includes(k.v) ? 120 : 0;
-    else {
+    else if (smode === 'pita') {
+      s = bestScore(k.v, r.rw);
+      if (s) s += rawBoost(k.raw, r.rr);
+    } else if (smode === 'dono') {
+      const sn = bestScore(k.v, r.nw);
+      const sr = bestScore(k.v, r.rw);
+      s = Math.max(sn, sr);
+      if (s) s += Math.max(sn ? rawBoost(k.raw, r.nr) : 0, sr ? rawBoost(k.raw, r.rr) : 0);
+    } else {
       s = bestScore(k.v, r.nw);
       if (s) s += rawBoost(k.raw, r.nr);
       if (fa) { const s2 = Math.round(bestScore(k.v, r.rw) * 0.55); if (s2 > s) s = s2; }
@@ -192,7 +220,7 @@ export function run(ctx, S) {
     const scan = (arr) => {
       const hit = [];
       for (const r of arr) {
-        const { s, mn } = scoreRec(r, toks, S.fa);
+        const { s, mn } = scoreRec(r, toks, S.smode, S.fa);
         if (s) hit.push([r, s, mn]);
       }
       const strict = hit.filter((h) => h[2] >= 60);
@@ -256,23 +284,30 @@ export function suggest(ctx, S) {
   const toks = parseQuery(S.q).filter((k) => k.t === 'name');
   if (!toks.length) return [];
 
+  const smode = S.smode || 'naam';
+  // Which name(s) a suggestion should offer, depending on the active mode.
+  const namesOf = (r) => (smode === 'pita' ? [r.rn] : smode === 'dono' ? [r.n, r.rn] : [r.n]);
+
   const pool = baseFilter(DATA, S, false);
   const map = new Map();
   let anyStrict = 0;
   for (const r of pool) {
-    const { s, mn } = scoreRec(r, toks, false);
+    const { s, mn } = scoreRec(r, toks, smode, false);
     if (s && mn >= 60) { anyStrict++; if (anyStrict >= 10) break; }
   }
   for (const r of pool) {
-    const { s, mn } = scoreRec(r, toks, false);
+    const { s, mn } = scoreRec(r, toks, smode, false);
     if (!s) continue;
     if (anyStrict >= 10 && mn < 60) continue;
-    let e = map.get(r.n);
-    if (!e) { e = { n: r.n, s, c: 0, w: new Set(), sr: [] }; map.set(r.n, e); }
-    e.c++;
-    e.sr.push(r.s);
-    e.w.add(r.w);
-    if (s > e.s) e.s = s;
+    for (const nm of namesOf(r)) {
+      if (!nm) continue;
+      let e = map.get(nm);
+      if (!e) { e = { n: nm, s, c: 0, w: new Set(), sr: [] }; map.set(nm, e); }
+      e.c++;
+      e.sr.push(r.s);
+      e.w.add(r.w);
+      if (s > e.s) e.s = s;
+    }
   }
   return [...map.values()]
     .sort((a, b) => b.s - a.s || b.c - a.c || coll.compare(a.n, b.n))

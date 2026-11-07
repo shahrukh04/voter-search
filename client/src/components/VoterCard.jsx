@@ -13,19 +13,23 @@ export function TagsOf({ r }) {
   );
 }
 
-export default function VoterCard({ r, k, qWords, fa, onOpen, onHouse }) {
+export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, onHouse }) {
+  // Which line the typed words actually matched — highlight only that one.
+  const hlName = smode === 'naam' || smode === 'dono';
+  const hlRel = smode === 'pita' || smode === 'dono' || (smode === 'naam' && fa);
+
   return (
     <article className={'vc' + (r.d ? ' del' : '')} style={{ '--k': Math.min(k, 14) }} onClick={() => onOpen(r.i)}>
       <div className={'av ' + gc(r)}>{ini(r.n)}</div>
       <div className="snb" title="क्रमांक"><small>क्र.</small><b>{r.s}</b></div>
       <div className="vb">
         <div className="nm">
-          {highlightWords(r.n, qWords)}
+          {hlName ? highlightWords(r.n, qWords) : r.n}
           <TagsOf r={r} />
         </div>
         <div className="rl">
           {r.rel && r.rn ? (
-            <>{r.rel}: {fa ? highlightWords(r.rn, qWords) : r.rn}</>
+            <>{r.rel}: {hlRel ? highlightWords(r.rn, qWords) : r.rn}</>
           ) : (
             r.rn
           )}
