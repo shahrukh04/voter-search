@@ -50,6 +50,8 @@ function romanSkel(w) {
     if (n3 === 'ksh') { o += 'कस'; i += 3; continue; }
     if (n3 === 'chh') { o += 'च'; i += 3; continue; }
     if (n3 === 'shh') { o += 'स'; i += 3; continue; }
+    // ज्ञ के रोमन रूप — gyan / gnan / jnan सब ज्ञान पर जाएँ (skeleton "जन")
+    if (n2 === 'gy' || n2 === 'gn' || n2 === 'jn') { o += 'जन'; i += 2; continue; }
     const di = { ch: 'च', sh: 'स', kh: 'क', gh: 'ग', jh: 'ज', th: 'त', dh: 'द', ph: 'प', bh: 'ब' }[n2];
     if (di) { o += di; i += 2; continue; }
     if (c === 'n' || c === 'm') {
@@ -110,6 +112,12 @@ export function bestScore(q, words) {
   let b = 0;
   for (const w of words) {
     const s = wordScore(q, w);
+    if (s > b) b = s;
+  }
+  // नाम कई शब्दों में लिखा हो ("ज्ञान चंद") पर user एक शब्द में खोजे ("ज्ञानचन्द"),
+  // तो पूरे नाम को जोड़कर भी मिलान करें।
+  if (words.length > 1) {
+    const s = wordScore(q, words.join(''));
     if (s > b) b = s;
   }
   return b;
