@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema(
     active: { type: Boolean, default: true },
     // Subscription end date. Admin perpetual accounts use a far-future date.
     expiresAt: { type: Date, required: true },
+    deviceLimit: { type: Number, default: 2 },
+    sessions: [{ _id: false, device: String, sid: String, expiresAt: Date, loginAt: Date, kind: String, browser: String }],
     lastLoginAt: { type: Date },
   },
   { timestamps: true }
@@ -27,6 +29,14 @@ userSchema.methods.toSafeJSON = function () {
     active: this.active,
     expiresAt: this.expiresAt,
   };
+};
+
+userSchema.methods.toAdminJSON = function () {
+  const devices = this.isSubscriptionValid()
+    ? this.sessions.filter(s => s.expiresAt > new Date()).map(s => ({
+        id: s.sid, kind: s.kind || 'unknown', browser: s.browser || null, loginAt: s.loginAt || null
+      })) : [];
+  return { ...this.toSafeJSON(), deviceLimit: this.deviceLimit, devices, signedInDevices: devices.length, lastLoginAt: this.lastLoginAt };
 };
 
 module.exports = mongoose.model('User', userSchema);

@@ -326,3 +326,32 @@ footer{color:var(--mut);font-size:12.5px;text-align:center;padding:6px 18px 30px
   .snb,.msn{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .vc,.fc{border:1px solid #999}
 }
+
+.adm .wrap{max-width:1160px;margin-inline:auto}
+.adm-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.adm-metrics>div,.adm-editor{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.adm-metrics span,.adm-policy{color:var(--mut);font-size:13px}
+.adm-metrics strong{display:block;font-size:32px;line-height:1.25;color:var(--accent);font-variant-numeric:tabular-nums}
+.adm-editor summary{cursor:pointer;font-weight:700}
+.adm-editor form{border:0;box-shadow:none;padding:16px 0 0}
+.adm-directory,.adm-policy{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.adm-directory{margin:22px 0 12px}.adm-directory h2{font-size:20px;margin:0}
+.adm .fld input,.adm-directory input,.adm-policy select{border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 10px;background:var(--card);color:var(--ink);font:inherit;min-width:0}
+.adm .fld input{width:100%}.adm-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))}
+.adm-list .adm-card{display:flex;flex-direction:column;min-width:0;padding:18px;overflow-wrap:anywhere}
+.adm-list .mact{margin-top:auto;border-top:1px solid var(--line);padding-top:12px}
+.adm-policy{background:var(--soft);border-radius:10px;padding:10px;margin-bottom:14px}
+.adm-presence.signed{color:#16764b;font-weight:750}.adm .btn.sm{min-height:42px}
+@media(max-width:620px){.adm-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.adm .two{grid-template-columns:1fr}.adm-directory input{width:100%}.adm-list .mact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.adm-top{flex-wrap:wrap}}
+
+.adm-directory input[type=search]{width:min(100%,19rem);padding-inline:14px}
+.adm-hero-in>div:first-child{min-width:0;overflow-wrap:anywhere}
+.adm-hbtns{flex-shrink:0}
+@media(max-width:620px){
+  .adm-directory input[type=search]{width:100%}
+  .adm-list .mact>button:last-child:nth-child(odd){grid-column:1/-1}
+}
+
+.adm-devices{list-style:none;margin:0 0 14px;padding:0}
+.adm-devices li{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.adm-devices span,.adm-devices small{display:block;color:var(--mut);font-size:12px}

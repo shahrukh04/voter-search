@@ -37,7 +37,7 @@ export default function AdminPanel({ onClose }) {
   const { user, logout } = useAuth();
   const toast = useToast();
 
-  const [tab, setTab] = useState('requests');
+  const [tab, setTab] = useState('users');
   const [reqs, setReqs] = useState(null);
   const [users, setUsers] = useState(null);
   const [err, setErr] = useState('');
@@ -67,6 +67,39 @@ export default function AdminPanel({ onClose }) {
   }, []);
 
   useEffect(() => { loadRequests(); loadUsers(); }, [loadRequests, loadUsers]);
+
+  useEffect(() => {
+    const refreshVisible = () => { if (!document.hidden) loadUsers(); };
+    const timer = setInterval(loadUsers, 5000);
+    document.addEventListener('visibilitychange', refreshVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshVisible);
+    };
+  }, [loadUsers]);
+
+  const candidates = (users || []).filter(u => u.role === 'user');
+  const [query, setQuery] = useState('');
+  const visibleUsers = (users || []).filter(u => (u.name + ' ' + u.username).toLowerCase().includes(query.trim().toLowerCase()));
+  async function revokeDevice(u, device) {
+    setBusyId(u.id);
+    try {
+      const result = await api.revokeDevice(u.id, device.id);
+      setUsers(list => list.map(item => item.id === u.id ? result.user : item));
+      toast('डिवाइस लॉग आउट हो गया');
+    } catch { toast('डिवाइस लॉग आउट नहीं हो सका'); }
+    finally { setBusyId(''); }
+  }
+
+  async function setLimit(u, value) {
+    setBusyId(u.id);
+    try {
+      const result = await api.deviceLimit(u.id, Number(value));
+      setUsers(list => list.map(item => item.id === u.id ? result.user : item));
+      toast('डिवाइस सीमा सेव हुई');
+    } catch { toast('डिवाइस सीमा सेव नहीं हुई'); }
+    finally { setBusyId(''); }
+  }
 
   const pending = useMemo(() => (reqs || []).filter((r) => r.status === 'pending').length, [reqs]);
 
@@ -216,6 +249,14 @@ export default function AdminPanel({ onClose }) {
 
       <main>
         <div className="wrap">
+          <section className="adm-metrics" aria-label="लॉगिन सारांश">
+            {[
+              ['कुल उम्मीदवार', users && candidates.length],
+              ['लॉगिन उम्मीदवार', users && candidates.filter(u => u.signedInDevices > 0).length],
+              ['लॉगिन डिवाइस', users && candidates.reduce((n, u) => n + u.signedInDevices, 0)],
+              ['लंबित अनुरोध', reqs && pending]
+            ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value ?? '—'}</strong></div>)}
+          </section>
           <div className="segbar">
             <button className={'adm-tab' + (tab === 'requests' ? ' on' : '')} onClick={() => setTab('requests')}>
               🔔 अनुरोध{pending ? <i className="badge">{pending}</i> : null}
@@ -263,14 +304,15 @@ export default function AdminPanel({ onClose }) {
             </>
           ) : (
             <>
+              <details className="adm-editor" open={form.name ? true : undefined}><summary>उपयोगकर्ता बनाएँ या अपडेट करें</summary>
               <form className="adm-card" onSubmit={createUser}>
-                <div className="adm-nm" style={{ marginBottom: 8 }}>➕ नया उपयोगकर्ता / यूज़र अपडेट</div>
+
                 <div className="two">
                   <label className="fld">नाम<input value={form.name} onChange={set('name')} /></label>
                   <label className="fld">लॉगिन आईडी<input value={form.username} onChange={set('username')} autoCapitalize="off" autoCorrect="off" spellCheck="false" /></label>
                 </div>
                 <div className="two">
-                  <label className="fld">पासवर्ड<input value={form.password} onChange={set('password')} placeholder="नया/बदलने के लिए" /></label>
+                  <label className="fld">पासवर्ड<input type="password" autoComplete="new-password" value={form.password} onChange={set('password')} placeholder="नया/बदलने के लिए" /></label>
                   <label className="fld">समाप्ति तिथि<input type="date" value={form.expiresAt} onChange={set('expiresAt')} /></label>
                 </div>
                 <label className="fld">भूमिका
@@ -281,10 +323,15 @@ export default function AdminPanel({ onClose }) {
                 </label>
                 <button className="btn pri" type="submit">💾 सेव करें</button>
               </form>
+              </details>
+              <header className="adm-directory"><h2>खाता निर्देशिका</h2>
+                <input type="search" aria-label="नाम या लॉगिन आईडी खोजें" placeholder="नाम या लॉगिन आईडी खोजें" value={query} onChange={e => setQuery(e.target.value)} />
+              </header>
+              {users && !visibleUsers.length && <p className="note">कोई खाता नहीं मिला।</p>}
 
               {users === null ? <div className="boot" style={{ position: 'static', padding: 40 }}><div className="spin" /></div> : (
                 <div className="adm-list">
-                  {users.map((u) => (
+                  {visibleUsers.map((u) => (
                     <div className="adm-card" key={u.id}>
                       <div className="adm-top">
                         <div className="adm-nm">
@@ -296,8 +343,29 @@ export default function AdminPanel({ onClose }) {
                       </div>
                       <div className="adm-meta">
                         <span>🔑 {u.username}</span>
-                        <span>{u.active ? '🟢 सक्रिय' : '🔴 निष्क्रिय'}</span>
+                        <span className={'adm-presence' + (u.signedInDevices ? ' signed' : '')}>{u.signedInDevices ? '● लॉगिन' : '○ लॉग आउट'}</span>
+                        <span>{u.signedInDevices} / {u.deviceLimit} डिवाइस</span>
                       </div>
+                      <div className="adm-policy">
+                        <small>पिछला लॉगिन<br/>{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('hi-IN') : 'अभी तक नहीं'}</small>
+                        <label>डिवाइस सीमा <select value={u.deviceLimit} disabled={busyId === u.id} onChange={e => setLimit(u, e.target.value)}>
+                          {Array.from({length: 20}, (_, i) => <option key={i} value={i+1}>{i+1}</option>)}
+                        </select></label>
+                      </div>
+                      {u.role === 'user' && u.devices?.length > 0 && (
+                        <ul className="adm-devices" aria-label="लॉगिन डिवाइस">
+                          {u.devices.map(device => (
+                            <li key={device.id}>
+                              <div>
+                                <strong>{{ phone: 'फोन', computer: 'लैपटॉप / डेस्कटॉप', tablet: 'टैबलेट' }[device.kind] || 'अज्ञात डिवाइस'}</strong>
+                                <span>{device.browser && device.browser !== 'Unknown' ? device.browser : 'अज्ञात ब्राउज़र'} · #{device.id.slice(-6)}</span>
+                                <small>लॉगिन समय · {device.loginAt ? new Date(device.loginAt).toLocaleString('hi-IN') : 'उपलब्ध नहीं'}</small>
+                              </div>
+                              <button className="btn sm" disabled={busyId === u.id} onClick={() => revokeDevice(u, device)}>लॉग आउट</button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       {editing === u.id ? (
                         <div className="mact">
                           <input className="adm-date" type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />

@@ -25,6 +25,7 @@ async function provisionUserFromRequest(doc) {
     {
       username,
       passwordHash,
+      sessions: [],
       name: String(doc.name || username).trim(),
       role: 'user',
       active: true,
@@ -39,7 +40,7 @@ router.use(authRequired, adminRequired);
 // GET /api/admin/users
 router.get('/users', async (_req, res) => {
   const users = await User.find().sort({ createdAt: -1 });
-  res.json({ users: users.map((u) => u.toSafeJSON()) });
+  res.json({ users: users.map((u) => u.toAdminJSON()) });
 });
 
 // POST /api/admin/users  { username, password, name, expiresAt, role }
@@ -62,10 +63,13 @@ router.post('/users', async (req, res) => {
     user.role = role === 'admin' ? 'admin' : 'user';
     user.expiresAt = exp;
     user.active = true;
-    if (password) user.passwordHash = await bcrypt.hash(String(password), 10);
+    if (password) {
+      user.passwordHash = await bcrypt.hash(String(password), 10);
+      user.sessions = [];
+    }
 
     await user.save();
-    res.json({ ok: true, user: user.toSafeJSON() });
+    res.json({ ok: true, user: user.toAdminJSON() });
   } catch (e) {
     console.error('admin upsert user error', e);
     res.status(500).json({ error: 'server_error' });
@@ -85,15 +89,47 @@ router.patch('/users/:id', async (req, res) => {
       user.expiresAt = exp;
     }
     if (typeof active === 'boolean') user.active = active;
+    if (active === false) user.sessions = [];
     if (role === 'admin' || role === 'user') user.role = role;
-    if (password) user.passwordHash = await bcrypt.hash(String(password), 10);
+    if (password) {
+      user.passwordHash = await bcrypt.hash(String(password), 10);
+      user.sessions = [];
+    }
 
     await user.save();
-    res.json({ ok: true, user: user.toSafeJSON() });
+    res.json({ ok: true, user: user.toAdminJSON() });
   } catch (e) {
     console.error('admin patch user error', e);
     res.status(500).json({ error: 'server_error' });
   }
+});
+
+router.delete('/users/:id/sessions/:sid', async (req, res, next) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id, role: 'user' },
+      { $pull: { sessions: { sid: req.params.sid } } },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ error: 'not_found' });
+    res.json({ user: user.toAdminJSON() });
+  } catch (error) { next(error); }
+});
+
+router.put('/users/:id/device-limit', async (req, res, next) => {
+  try {
+    const limit = req.body.deviceLimit;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+      return res.status(400).json({ error: 'invalid_device_limit' });
+    }
+    const valid = { $filter: { input: { $ifNull: ['$sessions', []] }, as: 's',
+      cond: { $gt: ['$$s.expiresAt', new Date()] } } };
+    const user = await User.findByIdAndUpdate(req.params.id, [
+      { $set: { deviceLimit: limit, sessions: { $slice: [valid, -limit] } } }
+    ], { new: true });
+    if (!user) return res.status(404).json({ error: 'not_found' });
+    res.json({ user: user.toAdminJSON() });
+  } catch (error) { next(error); }
 });
 
 // PATCH /api/admin/requests/:id  { status }
@@ -116,7 +152,7 @@ router.patch('/requests/:id', async (req, res) => {
       user = await provisionUserFromRequest(doc);
     }
 
-    res.json({ ok: true, request: doc, user: user ? user.toSafeJSON() : null });
+    res.json({ ok: true, request: doc, user: user ? user.toAdminJSON() : null });
   } catch (e) {
     console.error('admin patch request error', e);
     res.status(500).json({ error: 'server_error' });

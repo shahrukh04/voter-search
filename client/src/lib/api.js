@@ -27,9 +27,21 @@ async function request(path, { method = 'GET', body, raw = false } = {}) {
   return raw ? res : data;
 }
 
+function browserId() {
+  let id = localStorage.getItem('jv-device');
+  if (!id) {
+    id = Array.from(crypto.getRandomValues(new Uint8Array(16)), n => n.toString(16).padStart(2, '0')).join('');
+    localStorage.setItem('jv-device', id);
+  }
+  return id;
+}
+
 export const api = {
   getConfig: () => request('/config'),
-  login: (username, password) => request('/auth/login', { method: 'POST', body: { username, password } }),
+  login: (username, password) => request('/auth/login', { method: 'POST', body: { username, password, deviceId: browserId() } }),
+  logout: () => request('/auth/logout', { method: 'POST' }),
+  revokeDevice: (id, sid) => request('/admin/users/' + id + '/sessions/' + sid, { method: 'DELETE' }),
+  deviceLimit: (id, deviceLimit) => request('/admin/users/' + id + '/device-limit', { method: 'PUT', body: { deviceLimit } }),
   me: () => request('/auth/me'),
 
   getVoters: () => request('/voters'),

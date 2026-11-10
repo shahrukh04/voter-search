@@ -45,6 +45,10 @@ export default function Login() {
         setBusy(false);
         return;
       }
+      if (ex.data?.error === 'device_limit_reached') {
+        setErr('डिवाइस सीमा पूरी है। दूसरे डिवाइस से लॉग आउट करें या एडमिन से संपर्क करें।');
+        return;
+      }
       tries.current += 1;
       setErr('❌ आईडी या पासवर्ड गलत है' + (tries.current >= 3 ? ` (${tries.current} कोशिशें)` : ''));
       setShake(true);

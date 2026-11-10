@@ -39,6 +39,29 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  useEffect(() => {
+    if (!token || user?.role !== 'user') return;
+    let active = true;
+    async function checkSession() {
+      if (document.hidden) return;
+      try { await api.me(); }
+      catch (error) {
+        if (active && error.status === 401) {
+          setToken(null);
+          setUser(null);
+          if (localStorage.getItem(TOKEN_KEY) === token) localStorage.removeItem(TOKEN_KEY);
+        }
+      }
+    }
+    const timer = setInterval(checkSession, 15000);
+    document.addEventListener('visibilitychange', checkSession);
+    return () => {
+      active = false;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', checkSession);
+    };
+  }, [token, user?.role]);
+
   const login = useCallback(async (username, password) => {
     const res = await api.login(username, password);
     setToken(res.token);
@@ -48,6 +71,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    api.logout().catch(() => {});
     setToken(null);
     setUser(null);
     try { localStorage.removeItem(TOKEN_KEY); } catch (e) { /* ignore */ }
