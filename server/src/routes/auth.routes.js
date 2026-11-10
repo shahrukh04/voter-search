@@ -8,7 +8,7 @@ const router = express.Router();
 
 const { randomUUID } = require('crypto');
 
-function describeClient(agent = '') {
+function describeClient(agent = '', model) {
   const browsers = [
     [/Edg(?:A|iOS)?\//i, 'Edge'], [/SamsungBrowser\//i, 'Samsung Internet'],
     [/OPR\/|Opera Mini|OPiOS/i, 'Opera'], [/Firefox\/|FxiOS\//i, 'Firefox'],
@@ -19,7 +19,11 @@ function describeClient(agent = '') {
   if (/iPad|Tablet|Android(?!.*Mobile)/i.test(agent)) kind = 'tablet';
   else if (/Mobile|iPhone|Windows Phone/i.test(agent)) kind = 'phone';
   else if (/Windows NT|Macintosh|X11|CrOS/i.test(agent)) kind = 'computer';
-  return { kind, browser };
+  const platforms = [[/iPhone/, 'iPhone'], [/iPad/, 'iPad'], [/Android/, 'Android'], [/Windows/, 'Windows PC'],
+    [/Macintosh/, 'Mac'], [/CrOS/, 'Chromebook'], [/Linux/, 'Linux PC']];
+  const deviceName = typeof model === 'string' && model.trim() ? model.trim().slice(0, 80)
+    : platforms.find(([pattern]) => pattern.test(agent))?.[1] || null;
+  return { kind, browser, deviceName };
 }
 
 function signToken(user, sid) {
@@ -56,7 +60,7 @@ router.post('/login', async (req, res) => {
     const sid = randomUUID();
     const token = signToken(user, sid);
     const now = new Date();
-    const session = { device, sid, loginAt: now, ...describeClient(req.get('user-agent')), expiresAt: new Date(jwt.decode(token).exp * 1000) };
+    const session = { device, sid, loginAt: now, ...describeClient(req.get('user-agent'), req.body.model), expiresAt: new Date(jwt.decode(token).exp * 1000) };
     // Check capacity and replace this browser's session in one atomic update.
     const others = { $filter: {
       input: { $ifNull: ['$sessions', []] }, as: 's',
@@ -65,7 +69,7 @@ router.post('/login', async (req, res) => {
     const updated = await User.findOneAndUpdate({
       _id: user._id, active: true, passwordHash: user.passwordHash, expiresAt: user.expiresAt,
       $expr: { $lt: [{ $size: others }, { $ifNull: ['$deviceLimit', 2] }] }
-    }, [{ $set: { lastLoginAt: now, sessions: { $concatArrays: [others, [session]] } } }], { new: true });
+    }, [{ $set: { lastLoginAt: now, sessions: { $concatArrays: [others, { $literal: [session] }] } } }], { new: true });
     if (!updated) return res.status(409).json({ error: 'device_limit_reached' });
     return res.json({ token, user: updated.toSafeJSON() });
   } catch (e) {

@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   useEffect(() => {
-    if (!token || user?.role !== 'user') return;
+    if (!token) return;
     let active = true;
     async function checkSession() {
       if (document.hidden) return;

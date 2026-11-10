@@ -81,6 +81,18 @@ export default function AdminPanel({ onClose }) {
   const candidates = (users || []).filter(u => u.role === 'user');
   const [query, setQuery] = useState('');
   const visibleUsers = (users || []).filter(u => (u.name + ' ' + u.username).toLowerCase().includes(query.trim().toLowerCase()));
+  function canManage(u) { return !u.superAdmin && (user?.superAdmin || u.role === 'user'); }
+  async function deleteAccount(u) {
+    if (!window.confirm(u.username + ' का खाता स्थायी रूप से हटाएँ?')) return;
+    setBusyId(u.id);
+    try {
+      await api.deleteAccount(u.id);
+      setUsers(list => list.filter(item => item.id !== u.id));
+      toast('खाता हटा दिया गया');
+    } catch { toast('खाता नहीं हट सका'); }
+    finally { setBusyId(''); }
+  }
+
   async function revokeDevice(u, device) {
     setBusyId(u.id);
     try {
@@ -315,12 +327,12 @@ export default function AdminPanel({ onClose }) {
                   <label className="fld">पासवर्ड<input type="password" autoComplete="new-password" value={form.password} onChange={set('password')} placeholder="नया/बदलने के लिए" /></label>
                   <label className="fld">समाप्ति तिथि<input type="date" value={form.expiresAt} onChange={set('expiresAt')} /></label>
                 </div>
-                <label className="fld">भूमिका
+                {user?.superAdmin && <label className="fld">भूमिका
                   <select value={form.role} onChange={set('role')}>
                     <option value="user">यूज़र</option>
                     <option value="admin">एडमिन</option>
                   </select>
-                </label>
+                </label>}
                 <button className="btn pri" type="submit">💾 सेव करें</button>
               </form>
               </details>
@@ -336,7 +348,7 @@ export default function AdminPanel({ onClose }) {
                       <div className="adm-top">
                         <div className="adm-nm">
                           {u.name}
-                          {u.role === 'admin' ? <span className="tag sup">एडमिन</span> : <span className="tag">यूज़र</span>}
+                          {u.role === 'admin' ? <span className="tag sup">{u.superAdmin ? 'सुपर एडमिन' : 'एडमिन'}</span> : <span className="tag">यूज़र</span>}
                           {u.active ? null : <span className="tag red">निष्क्रिय</span>}
                         </div>
                         <div className="adm-when">📅 {fmtDate(u.expiresAt)}</div>
@@ -348,25 +360,25 @@ export default function AdminPanel({ onClose }) {
                       </div>
                       <div className="adm-policy">
                         <small>पिछला लॉगिन<br/>{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('hi-IN') : 'अभी तक नहीं'}</small>
-                        <label>डिवाइस सीमा <select value={u.deviceLimit} disabled={busyId === u.id} onChange={e => setLimit(u, e.target.value)}>
+                        {canManage(u) && <label>डिवाइस सीमा <select value={u.deviceLimit} disabled={busyId === u.id} onChange={e => setLimit(u, e.target.value)}>
                           {Array.from({length: 20}, (_, i) => <option key={i} value={i+1}>{i+1}</option>)}
-                        </select></label>
+                        </select></label>}
                       </div>
-                      {u.role === 'user' && u.devices?.length > 0 && (
+                      {(canManage(u) || user?.superAdmin) && u.devices?.length > 0 && (
                         <ul className="adm-devices" aria-label="लॉगिन डिवाइस">
                           {u.devices.map(device => (
                             <li key={device.id}>
                               <div>
-                                <strong>{{ phone: 'फोन', computer: 'लैपटॉप / डेस्कटॉप', tablet: 'टैबलेट' }[device.kind] || 'अज्ञात डिवाइस'}</strong>
+                                <strong>{device.deviceName || { phone: 'फोन', computer: 'लैपटॉप / डेस्कटॉप', tablet: 'टैबलेट' }[device.kind] || 'अज्ञात डिवाइस'}</strong>
                                 <span>{device.browser && device.browser !== 'Unknown' ? device.browser : 'अज्ञात ब्राउज़र'} · #{device.id.slice(-6)}</span>
                                 <small>लॉगिन समय · {device.loginAt ? new Date(device.loginAt).toLocaleString('hi-IN') : 'उपलब्ध नहीं'}</small>
                               </div>
-                              <button className="btn sm" disabled={busyId === u.id} onClick={() => revokeDevice(u, device)}>लॉग आउट</button>
+                              {canManage(u) && <button className="btn sm" disabled={busyId === u.id} onClick={() => revokeDevice(u, device)}>लॉग आउट</button>}
                             </li>
                           ))}
                         </ul>
                       )}
-                      {editing === u.id ? (
+                      {canManage(u) && (editing === u.id ? (
                         <div className="mact">
                           <input className="adm-date" type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
                           <button className="btn gold sm" disabled={busyId === u.id} onClick={() => saveExpiry(u)}>✓ सेव</button>
@@ -377,12 +389,13 @@ export default function AdminPanel({ onClose }) {
                           <button className={'btn sm' + (u.active ? '' : ' gold')} disabled={busyId === u.id} onClick={() => toggleActive(u)}>
                             {u.active ? '⏸ निष्क्रिय करें' : '▶️ सक्रिय करें'}
                           </button>
-                          <button className={'btn sm' + (u.role === 'admin' ? '' : ' gold')} disabled={busyId === u.id} onClick={() => changeRole(u)}>
-                            {u.role === 'admin' ? '👤 यूज़र बनाएँ' : '🛡 एडमिन बनाएँ'}
-                          </button>
+                          {user?.superAdmin && <button className={'btn sm' + (u.role === 'admin' ? '' : ' gold')} disabled={busyId === u.id} onClick={() => changeRole(u)}>
+                            {u.role === 'admin' ? 'एडमिन अधिकार हटाएँ' : 'एडमिन बनाएँ'}
+                          </button>}
+                          {user?.superAdmin && <button className="btn sm" disabled={busyId === u.id} onClick={() => deleteAccount(u)}>खाता हटाएँ</button>}
                           <button className="btn sm" onClick={() => { setEditing(u.id); setEditDate(toDateInput(u.expiresAt)); }}>📅 तारीख बदलें</button>
                         </div>
-                      )}
+                      ))}
                     </div>
                   ))}
                 </div>

@@ -38,7 +38,12 @@ function browserId() {
 
 export const api = {
   getConfig: () => request('/config'),
-  login: (username, password) => request('/auth/login', { method: 'POST', body: { username, password, deviceId: browserId() } }),
+  login: async (username, password) => {
+    let model;
+    try { model = (await navigator.userAgentData?.getHighEntropyValues(['model']))?.model; } catch {}
+    return request('/auth/login', { method: 'POST', body: { username, password, deviceId: browserId(), model } });
+  },
+  deleteAccount: id => request('/admin/users/' + id, { method: 'DELETE' }),
   logout: () => request('/auth/logout', { method: 'POST' }),
   revokeDevice: (id, sid) => request('/admin/users/' + id + '/sessions/' + sid, { method: 'DELETE' }),
   deviceLimit: (id, deviceLimit) => request('/admin/users/' + id + '/device-limit', { method: 'PUT', body: { deviceLimit } }),
