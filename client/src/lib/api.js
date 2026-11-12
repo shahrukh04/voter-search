@@ -53,7 +53,6 @@ export const api = {
   changePassword: payload => request('/auth/change-password', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
 
-  searchVoters: (state, page) => request('/voters/search', { method: 'POST', body: { state, page } }),
   getVoters: () => request('/voters'),
   getMeta: () => request('/voters/meta'),
 

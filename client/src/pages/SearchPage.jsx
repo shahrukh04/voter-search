@@ -21,9 +21,6 @@ export default function SearchPage({ onOpenAdmin }) {
   // क्रमांक/वार्ड सुधारने का विकल्प केवल एडमिन को दिखता है।
   const isAdmin = user?.role === 'admin';
 
-  const [familyDetails, setFamilyDetails] = useState([]);
-  const [remote, setRemote] = useState(null);
-  const [revision, setRevision] = useState(0);
   const [rawVoters, setRawVoters] = useState(null);
   const [edits, setEdits] = useState({});
   const [loadErr, setLoadErr] = useState('');
@@ -44,7 +41,6 @@ export default function SearchPage({ onOpenAdmin }) {
   }, []);
 
   useEffect(() => {
-    if (!isAdmin) return;
     let alive = true;
     (async () => {
       try {
@@ -57,24 +53,11 @@ export default function SearchPage({ onOpenAdmin }) {
       }
     })();
     return () => { alive = false; };
-  }, [fetchData, isAdmin]);
-
-  useEffect(() => {
-    if (isAdmin) return;
-    let alive = true;
-    const timer = setTimeout(async () => {
-      try {
-        const data = await api.searchVoters(S, page);
-        if (alive) { setRemote(data); setRawVoters(data.records); setLoadErr(''); }
-      } catch { if (alive) setLoadErr('डेटा लोड नहीं हो सका'); }
-    }, 250);
-    return () => { alive = false; clearTimeout(timer); };
-  }, [isAdmin, S, page, revision]);
+  }, [fetchData]);
 
   // रीफ़्रेश — सारे फ़िल्टर/खोज हटाकर डेटा दोबारा लाता है (अकेले नतीजे से बाहर
   // निकलने का आसान तरीका), और पूरी वेबसाइट reload करने की ज़रूरत नहीं पड़ती।
   const refresh = useCallback(async () => {
-    if (!isAdmin) { setS(defaultState); setPage(0); setModal(null); setRevision(v => v + 1); return; }
     if (refreshing) return;
     setRefreshing(true);
     try {
@@ -92,20 +75,12 @@ export default function SearchPage({ onOpenAdmin }) {
     } finally {
       setRefreshing(false);
     }
-  }, [fetchData, refreshing, toast, isAdmin]);
+  }, [fetchData, refreshing, toast]);
 
-  const ctx = useMemo(() => {
-    if (!rawVoters) return null;
-    const prepared = prepare(rawVoters, edits);
-    if (!isAdmin && remote) return { ...prepared, WARDS: remote.wards, ACT: remote.active, FAMCOUNT: remote.families };
-    return prepared;
-  }, [rawVoters, edits, isAdmin, remote]);
+  const ctx = useMemo(() => (rawVoters ? prepare(rawVoters, edits) : null), [rawVoters, edits]);
 
-  const result = useMemo(() => !isAdmin && remote
-    ? { ...remote.result, MATCH: remote.result.MATCH ? new Set(remote.result.MATCH) : null }
-    : (ctx ? run(ctx, S) : { toks: [], RES: [], wardCnt: {}, NOHOUSE: 0, MATCH: null }), [ctx, S, isAdmin, remote]);
+  const result = useMemo(() => (ctx ? run(ctx, S) : { toks: [], RES: [], wardCnt: {}, NOHOUSE: 0, MATCH: null }), [ctx, S]);
   const { RES, wardCnt, NOHOUSE, MATCH } = result;
-  const total = !isAdmin && remote ? remote.total : RES.length;
 
   const qWords = useMemo(() => {
     const arr = parseQuery(S.q);
@@ -114,22 +89,20 @@ export default function SearchPage({ onOpenAdmin }) {
   }, [S.q, S.q2, S.smode]);
 
   const mohallaOpts = useMemo(() => {
-    if (!isAdmin && remote) return remote.mohallas;
     if (!ctx) return [];
     const pool = ctx.DATA.filter((r) => !r.d && (!S.ward || r.w === +S.ward));
     const c = {};
     pool.forEach((r) => { if (r.m) c[r.m] = (c[r.m] || 0) + 1; });
     return Object.keys(c).sort().map((k) => [k, c[k]]);
-  }, [ctx, S.ward, remote, isAdmin]);
+  }, [ctx, S.ward]);
 
   // result/व्यू बदलने पर पहले पेज पर लौटें
   useEffect(() => {
     setPage(0);
-  }, [S]);
+  }, [RES, S.view]);
 
   // debounced suggestions
   useEffect(() => {
-    if (!isAdmin) { setSugList(remote?.suggestions || []); setSugList2(remote?.suggestions2 || []); return; }
     if (!ctx) return undefined;
     clearTimeout(sugTimer.current);
     sugTimer.current = setTimeout(() => {
@@ -138,7 +111,7 @@ export default function SearchPage({ onOpenAdmin }) {
       setSugList2(S.smode === 'dono' ? suggest(ctx, S, 'r') : []);
     }, 120);
     return () => clearTimeout(sugTimer.current);
-  }, [ctx, S, isAdmin, remote]);
+  }, [ctx, S]);
 
   /* ---------- derived ---------- */
   const subtitle = useMemo(() => {
@@ -147,18 +120,7 @@ export default function SearchPage({ onOpenAdmin }) {
     return `${fmt(ctx.FAMCOUNT)} परिवार / मकान`;
   }, [ctx, S.view]);
 
-  const active = modal && modal.type === 'record' ? ctx && (ctx.BYI.get(modal.i) || familyDetails.find(r => r.i === modal.i)) : null;
-
-  useEffect(() => {
-    if (isAdmin || !active) return;
-    let alive = true;
-    setFamilyDetails([]);
-    if (!active.h || active.h === '0' || active.h === '00') return;
-    api.searchVoters({ ...defaultState, view: 'family', ward: String(active.w), h: active.h, moh: active.m }, 0)
-      .then(data => { if (alive) setFamilyDetails(data.records); })
-      .catch(() => { if (alive) toast('परिवार लोड नहीं हुआ'); });
-    return () => { alive = false; };
-  }, [isAdmin, active?.w, active?.h, active?.m]);
+  const active = modal && modal.type === 'record' ? ctx && ctx.BYI.get(modal.i) : null;
 
   /* ---------- edit persistence ---------- */
   const persist = useCallback(async (next) => {
@@ -233,10 +195,9 @@ export default function SearchPage({ onOpenAdmin }) {
 
   const otherMembers = useCallback((r) => {
     if (!ctx) return [];
-    if (!isAdmin) return familyDetails.filter(member => member.i !== r.i);
     const f = ctx.FAM.get(houseKey(r));
     return f ? f.mem.filter((x) => x.i !== r.i) : [];
-  }, [ctx, isAdmin, familyDetails]);
+  }, [ctx]);
 
   const handlePrint = useCallback(() => {
     setPrintAll(true);
@@ -263,9 +224,9 @@ export default function SearchPage({ onOpenAdmin }) {
 
   const fam = S.view === 'family';
   const per = fam ? PAGE_F : PAGE_V;
-  const pages = Math.max(1, Math.ceil(total / per));
+  const pages = Math.max(1, Math.ceil(RES.length / per));
   const cur = Math.min(page, pages - 1);
-  const visible = !isAdmin || printAll ? RES : RES.slice(cur * per, cur * per + per);
+  const visible = printAll ? RES : RES.slice(cur * per, cur * per + per);
 
   return (
     <>
@@ -324,7 +285,7 @@ export default function SearchPage({ onOpenAdmin }) {
             S={S}
             setS={setS}
             mohallaOpts={mohallaOpts}
-            resultCount={total}
+            resultCount={RES.length}
             open={panelOpen}
             onClose={() => setPanelOpen(false)}
             onReset={resetFilters}
@@ -332,10 +293,9 @@ export default function SearchPage({ onOpenAdmin }) {
 
           <section>
             <Stats view={S.view} RES={RES} />
-            {!isAdmin && <div className="note">ऊपर के आँकड़े और CSV / प्रिंट वर्तमान पेज के हैं।</div>}
 
             <div className="bar">
-              <span className="cnt">{fmt(total)}{fam ? ' परिवार' : ' परिणाम'}{total > per ? ` · पेज ${cur + 1}/${pages}` : ''}</span>
+              <span className="cnt">{fmt(RES.length)}{fam ? ' परिवार' : ' परिणाम'}{RES.length > per ? ` · पेज ${cur + 1}/${pages}` : ''}</span>
               <div className="mact">
                 <button className="btn sm" onClick={refresh} disabled={refreshing} title="सारे फ़िल्टर/खोज हटाकर पूरा डेटा दोबारा लाएँ (पूरी वेबसाइट reload नहीं)">
                   <span className={'ric' + (refreshing ? ' spin' : '')}>↻</span>{refreshing ? ' रीफ़्रेश…' : ' रीफ़्रेश'}
@@ -391,7 +351,7 @@ export default function SearchPage({ onOpenAdmin }) {
               </div>
             )}
 
-            {total > per ? (
+            {RES.length > per ? (
               <div className="pager">
                 <button
                   className="btn"
@@ -402,7 +362,7 @@ export default function SearchPage({ onOpenAdmin }) {
                 </button>
                 <span className="pgtxt">
                   पेज <b>{cur + 1}</b> / {pages}
-                  <small>· {fmt(cur * per + 1)}–{fmt(Math.min(total, (cur + 1) * per))} दिख रहे हैं</small>
+                  <small>· {fmt(cur * per + 1)}–{fmt(Math.min(RES.length, (cur + 1) * per))} दिख रहे हैं</small>
                 </span>
                 <button
                   className="btn pri"
