@@ -24,7 +24,7 @@ router.post('/request', async (req, res) => {
   const username = String(req.body.username || '').trim().toLowerCase();
   const mobile = String(req.body.mobile || '').trim();
   const channel = req.body.channel;
-  if (!username || username.length > 100 || !/^[0-9]{10}$/.test(mobile) || !['sms', 'whatsapp'].includes(channel)) {
+  if (!username || username.length > 100 || !/^[0-9]{10}$/.test(mobile) || channel !== 'sms') {
     return res.status(400).json({ error: 'invalid_recovery_details' });
   }
   const id = randomUUID();

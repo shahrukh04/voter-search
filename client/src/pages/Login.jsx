@@ -91,7 +91,7 @@ export default function Login() {
         </label>
         <button className="go" type="submit" disabled={busy}>{busy ? 'जाँच हो रही है…' : '🔐 लॉगिन'}</button>
         <div className="err" role="alert">{err}</div>
-        <button type="button" className="lnk" onClick={() => setMode('forgot')}>पासवर्ड भूल गए?</button>
+        <button type="button" className="lnk" onClick={() => setMode('forgot')}>पासवर्ड भूल गए? SMS से बदलें</button>
         <button type="button" className="lnk" onClick={() => setMode('subscribe')}>सब्सक्रिप्शन नहीं है? अनुरोध भेजें →</button>
       </form>
     </div>
@@ -102,60 +102,85 @@ function Subscribe({ config, onBack, message }) {
   const toast = useToast();
   const [form, setForm] = useState({ username: '', mobile: '', password: '' });
   const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
   const contact = (config && config.contactMobile) || '6378375233';
   const plan = (config && config.plan) || '₹5,000 / माह';
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function send() {
+    if (busy || sent) return;
     const username = form.username.trim();
     if (!username || !/^[0-9]{10}$/.test(form.mobile.trim()) || form.password.length < 4) {
       setErr('लॉगिन आईडी, 10 अंक का मोबाइल और 4+ अक्षर का पासवर्ड भरें');
       return;
     }
     setErr('');
-    const text =
-      '🔔 जालिया मतदाता ऐप — सब्सक्रिप्शन अनुरोध\n' +
-      'लॉगिन आईडी: ' + username + '\n' +
-      'मोबाइल: ' + form.mobile + '\n' +
-      'प्लान: ' + plan + '\n' +
-      'भुगतान कर दिया है, कृपया चालू करें।';
-
+    setBusy(true);
     try {
       await api.subscribe({
         name: username,
-        mobile: form.mobile,
+        mobile: form.mobile.trim(),
         loginId: username,
         password: form.password,
         plan,
       });
+      setSent(true);
+      setForm(f => ({ ...f, password: '' }));
+      toast('✓ अनुरोध एडमिन को भेज दिया गया');
     } catch (e) {
-      /* request logging is best-effort; WhatsApp still goes out */
-    }
-    window.open('https://wa.me/91' + contact + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
-    toast('✓ अनुरोध भेजा गया');
+      setErr('अनुरोध सेव नहीं हुआ। कृपया दोबारा कोशिश करें।');
+    } finally { setBusy(false); }
   }
 
   return (
-    <div className="login" role="dialog" aria-label="सब्सक्रिप्शन">
-      <span className="orb o1" />
-      <span className="orb o2" />
-      <div className="lcard">
-        <div className="crest"><Crest /></div>
-        <div className="own">Subscribe</div>
-        <h2>सब्सक्रिप्शन</h2>
-        <p>{message || 'जालिया द्वितीय · वार्ड मतदाता खोज'}</p>
-        <div className="price">प्लान <b>₹5,000</b> / माह</div>
-        <div className="payno">
-          📱 <b>{contact}</b>
-          <button type="button" className="cpb" onClick={() => { copyText(contact).then(() => toast('✓ कॉपी हो गया')); }}>कॉपी</button>
-        </div>
-        <label>लॉगिन आईडी<div className="in"><input value={form.username} onChange={set('username')} autoCapitalize="off" autoCorrect="off" spellCheck="false" /></div></label>
-        <label>मोबाइल नंबर<div className="in"><input value={form.mobile} inputMode="numeric" maxLength={10} onChange={set('mobile')} /></div></label>
-        <label>पासवर्ड<div className="in"><input type="text" value={form.password} onChange={set('password')} autoCapitalize="off" autoCorrect="off" spellCheck="false" /></div></label>
-        <button type="button" className="go" onClick={send}>✅ Subscribe — Admin को अनुरोध भेजें</button>
-        <div className="err">{err}</div>
-        <button type="button" className="lnk" onClick={onBack}>← लॉगिन पर वापस</button>
+    <div className="subscription-page">
+      <div className="subscription-shell">
+        <header className="subscription-header">
+          <div className="subscription-brand"><div className="subscription-mark"><Crest /></div><div><strong>जालिया मतदाता खोज</strong><span>सब्सक्रिप्शन</span></div></div>
+          <button type="button" className="subscription-back" onClick={onBack}>← लॉगिन पर वापस</button>
+        </header>
+        <main className="subscription-layout">
+          <section className="subscription-payment" aria-labelledby="payment-title">
+            <div className="subscription-payment-heading">
+              <span className="subscription-eyebrow">मासिक सदस्यता</span>
+              <h1 id="payment-title">अपनी खोज शुरू करें।</h1>
+              <p>मतदाता खोज, वार्ड फ़िल्टर और परिवार की जानकारी एक जगह।</p>
+              <div className="subscription-price">{plan}</div>
+            </div>
+            <figure className="subscription-qr">
+              <a href="/images/subscription-payment.jpeg" target="_blank" rel="noopener noreferrer" aria-label="पेमेंट QR पूरा खोलें">
+                <img src="/images/subscription-payment.jpeg" alt="MOHAMMED SHAHRUKH का PhonePe payment QR" width="843" height="1600" />
+              </a>
+              <figcaption>QR स्कैन करके भुगतान करें।</figcaption>
+            </figure>
+            <a className="subscription-download" href="/images/subscription-payment.jpeg" download="jaliya-payment-qr.jpeg">QR डाउनलोड करें ↓</a>
+          </section>
+          <section className="subscription-register" aria-labelledby="register-title">
+            {sent ? <div className="subscription-success" role="status">
+              <span aria-hidden="true">✓</span><h2 id="register-title">अनुरोध भेज दिया गया</h2>
+              <p>आपका अनुरोध सेव हो गया है। एडमिन भुगतान की पुष्टि करके आपका खाता चालू करेंगे।</p>
+              <button className="subscription-submit" onClick={onBack}>लॉगिन पर जाएँ →</button>
+            </div> : <>
+              <h2 id="register-title">खाते की जानकारी</h2>
+              <p className="subscription-description">{message || 'भुगतान के बाद अपनी जानकारी भरकर अनुरोध भेजें। एडमिन की स्वीकृति के बाद लॉगिन कर सकेंगे।'}</p>
+              <form onSubmit={event => { event.preventDefault(); send(); }}>
+                <fieldset className="subscribe-fields" disabled={busy}>
+                  <label>लॉगिन आईडी<input required autoComplete="username" value={form.username} onChange={set('username')} autoCapitalize="off" autoCorrect="off" spellCheck="false" placeholder="अपनी लॉगिन आईडी चुनें" /></label>
+                  <label>मोबाइल नंबर<div className="subscription-phone"><span>+91</span><input required type="tel" autoComplete="tel-national" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} value={form.mobile} onChange={set('mobile')} placeholder="10 अंक का मोबाइल नंबर" /></div></label>
+                  <label>पासवर्ड<input required minLength={4} type="password" autoComplete="new-password" value={form.password} onChange={set('password')} placeholder="कम से कम 4 अक्षर" /></label>
+                </fieldset>
+                {err && <p className="subscription-error" role="alert">{err}</p>}
+                <button type="submit" className="subscription-submit" disabled={busy}>{busy ? 'अनुरोध भेजा जा रहा है…' : 'सब्सक्रिप्शन अनुरोध भेजें →'}</button>
+              </form>
+              <div className="subscription-help">
+                <div><strong>भुगतान में सहायता चाहिए?</strong><span>{contact}</span></div>
+                <button type="button" onClick={() => copyText(contact).then(() => toast('✓ नंबर कॉपी हो गया')).catch(() => toast('नंबर कॉपी नहीं हुआ'))}>नंबर कॉपी करें</button>
+              </div>
+            </>}
+          </section>
+        </main>
       </div>
     </div>
   );

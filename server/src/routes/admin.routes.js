@@ -30,6 +30,7 @@ async function provisionUserFromRequest(doc) {
   return User.findOneAndUpdate(
     { username, role: 'user' },
     {
+      $setOnInsert: { mobile: String(doc.mobile || '').trim() },
       username,
       passwordHash,
       sessions: [],

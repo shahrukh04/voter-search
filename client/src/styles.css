@@ -388,3 +388,45 @@ footer{color:var(--mut);font-size:12.5px;text-align:center;padding:6px 18px 30px
 .profile-success p{color:var(--mut);font-size:14px;line-height:1.8}
 .profile-content button:disabled{cursor:wait;opacity:.6}
 @media(max-width:480px){.profile-modal{padding:10px}.profile-modal .profile-sheet{max-height:calc(100dvh - 20px);border-radius:18px}.profile-header{padding:16px}.profile-content{padding:18px}.profile-account{padding:14px;gap:10px;flex-wrap:wrap}.profile-role{margin-left:auto}}
+
+.subscribe-fields{border:0;padding:0;margin:0;min-width:0}
+
+/* Subscription and payment */
+.subscription-page{position:fixed;inset:0;z-index:999;overflow:auto;background:#f4f3f8;color:#24213b;padding:28px 24px 48px}
+.subscription-shell{max-width:1020px;margin:auto}
+.subscription-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+.subscription-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.subscription-brand strong{font-size:17px;display:block}.subscription-brand span{font-size:12px;color:#726c84}
+.subscription-mark{width:44px;height:44px;padding:9px;background:#30215b;border-radius:12px;flex-shrink:0}
+.subscription-mark svg{width:100%;height:100%}
+.subscription-back{border:1px solid #dedbe7;background:#fff;color:#493b6b;border-radius:10px;padding:11px 14px;font:inherit;font-size:13px;font-weight:700;flex-shrink:0}
+.subscription-layout{display:grid;grid-template-columns:1fr 1.1fr;align-items:stretch;background:#fff;border:1px solid #e4e0ec;border-radius:24px;overflow:hidden;box-shadow:0 16px 50px #2e205410;padding:0}
+.subscription-payment{padding:32px;background:#efebf8;text-align:center;min-width:0}
+.subscription-eyebrow{font-size:12px;font-weight:700;color:#6e529a}
+.subscription-payment h1{margin:10px 0;font-size:28px;letter-spacing:-.5px;color:#30214e}
+.subscription-payment-heading p{font-size:13px;line-height:1.8;color:#746782;max-width:310px;margin:0 auto 16px}
+.subscription-price{font-size:25px;font-weight:800;color:#392258;margin-bottom:22px}
+.subscription-qr{margin:0 auto;width:min(100%,270px)}
+.subscription-qr a{display:block;border-radius:14px;background:#090909;overflow:hidden}
+.subscription-qr img{display:block;width:100%;height:auto}
+.subscription-qr figcaption{font-size:12px;color:#6c607d;margin-top:12px}
+.subscription-download{display:inline-block;margin-top:12px;font-size:13px;color:#513478;font-weight:700;text-underline-offset:4px}
+.subscription-register{padding:42px 38px;min-width:0}
+.subscription-register h2{font-size:24px;margin:0 0 12px;color:#29213b}
+.subscription-description{font-size:14px;color:#797184;line-height:1.9;margin:0 0 30px}
+.subscription-register label{display:block;font-size:13px;font-weight:700;margin-bottom:22px;color:#4c435d}
+.subscription-register input{display:block;width:100%;min-width:0;height:50px;margin-top:8px;padding:12px 14px;background:#fff;border:1px solid #dcd7e5;border-radius:10px;font:inherit;font-size:16px;color:#2e2440}
+.subscription-register input::placeholder{color:#9b94a6;font-size:14px;font-weight:400}
+.subscription-phone{display:flex;align-items:center;border:1px solid #dcd7e5;border-radius:10px;margin-top:8px;overflow:hidden}
+.subscription-phone span{padding:0 14px;border-right:1px solid #e6e1ec;font-size:14px;color:#746782}
+.subscription-phone input{border:0;margin:0;border-radius:0}
+.subscription-submit{width:100%;border:0;border-radius:10px;padding:15px 12px;background:#523180;color:white;font:inherit;font-size:15px;font-weight:700;min-height:50px}
+.subscription-submit:hover{background:#412465}.subscription-submit:disabled{opacity:.6;cursor:wait}
+.subscription-help{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #ece8f1;margin-top:30px;padding-top:24px}
+.subscription-help strong{display:block;font-size:12px;color:#71647f}.subscription-help span{display:block;font-size:15px;margin-top:7px;font-variant-numeric:tabular-nums}
+.subscription-help button{border:1px solid #ded7e9;border-radius:8px;background:#faf8fd;color:#593c7b;padding:10px;font:inherit;font-size:12px}
+.subscription-error{font-size:13px;color:#b02e38;background:#fff0f1;padding:12px;border-radius:8px;line-height:1.7}
+.subscription-success{padding:30px 0;text-align:center}.subscription-success>span{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:#e7f5eb;color:#287047;font-size:26px;margin:0 auto 22px}
+.subscription-success p{font-size:14px;color:#797184;line-height:1.9;margin-bottom:24px}
+.subscription-page :is(button,input,a):focus-visible{outline:3px solid #9874bf;outline-offset:3px}
+@media(max-width:680px){.subscription-page{padding:16px 12px 30px}.subscription-header{flex-wrap:wrap;margin-bottom:18px}.subscription-back{font-size:12px;padding:9px 11px}.subscription-layout{grid-template-columns:1fr;border-radius:18px}.subscription-payment{padding:26px 20px}.subscription-register{padding:28px 22px}.subscription-payment h1{font-size:26px}.subscription-qr{width:min(100%,300px)}.subscription-help{flex-wrap:wrap}}

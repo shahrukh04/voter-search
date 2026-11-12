@@ -6,7 +6,6 @@ export default function Profile({ onClose, recovery = false }) {
   const { user, logout } = useAuth();
   const dialogRef = useRef(null);
   const [username, setUsername] = useState(user?.username || '');
-  const [channel, setChannel] = useState('sms');
   const [requestId, setRequestId] = useState('');
   const [code, setCode] = useState('');
   const [forgot, setForgot] = useState(recovery);
@@ -53,7 +52,7 @@ export default function Profile({ onClose, recovery = false }) {
     setBusy(true);
     setMessage('');
     try {
-      const result = await api.requestOtp({ username, mobile, channel });
+      const result = await api.requestOtp({ username, mobile, channel: 'sms' });
       setRequestId(result.requestId);
       setCode('');
       setMessage(result.message);
@@ -106,11 +105,10 @@ export default function Profile({ onClose, recovery = false }) {
           <div className="profile-success"><span className="profile-success-icon" aria-hidden="true">✓</span><h3>पासवर्ड बदल गया</h3><p role="status">पासवर्ड बदल गया। सभी डिवाइस से लॉग आउट कर दिया गया है। नए पासवर्ड से लॉगिन करें।</p><button className="btn pri" onClick={logout}>लॉगिन पर जाएँ →</button></div>
         ) : forgot ? (
           <>
-            <p className="profile-description">अपने खाते में सेव किए मोबाइल नंबर पर OTP मँगाकर नया पासवर्ड बनाएँ।</p>
+            <p className="profile-description">अपने खाते में सेव किए मोबाइल नंबर पर SMS OTP मँगाकर नया पासवर्ड बनाएँ।</p>
             {!requestId ? <form onSubmit={sendOtp}>
               <label className="fld">लॉगिन आईडी<input required value={username} onChange={e => setUsername(e.target.value)} autoCapitalize="none" /></label>
               <label className="fld">सेव किया मोबाइल नंबर<input type="tel" required pattern="[0-9]{10}" maxLength={10} value={mobile} onChange={e => setMobile(e.target.value)} /></label>
-              <label className="fld">OTP कैसे भेजें<select value={channel} onChange={e => setChannel(e.target.value)}><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
               <button className="btn pri" disabled={busy}>{busy ? 'भेजा जा रहा है…' : 'OTP भेजें →'}</button>
             </form> : <form onSubmit={reset}>
               <label className="fld">OTP<input autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{4,10}" required value={code} onChange={e => setCode(e.target.value)} /></label>

@@ -128,8 +128,7 @@ export default function AdminPanel({ onClose }) {
 
       if (status === 'approved') {
         if (res.user) {
-          sendCredentials(req || {}, res.user);
-          toast('✓ स्वीकृत — यूज़र बन गया, WhatsApp खुल रहा है');
+          toast('✓ यूज़र सफलतापूर्वक बन गया। लॉगिन जानकारी भेज सकते हैं।');
           loadUsers();
         } else {
           toast('⚠ स्वीकृत, पर पासवर्ड नहीं था — यूज़र नहीं बना');
@@ -149,7 +148,7 @@ export default function AdminPanel({ onClose }) {
     window.open('https://wa.me/91' + to + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
   }
 
-  // Sent to the applicant as soon as the admin approves their request.
+  // Admin explicitly shares credentials after successful account creation.
   function sendCredentials(req, u) {
     const text =
       'नमस्ते,\n' +
@@ -158,16 +157,6 @@ export default function AdminPanel({ onClose }) {
       'पासवर्ड: ' + (req.password || '') + '\n\n' +
       'ऐप खोलकर इन्हीं से लॉगिन करें।';
     waLink(req.mobile, text);
-  }
-
-  function whatsapp(r) {
-    const text =
-      'नमस्ते,\n' +
-      'जालिया मतदाता ऐप सब्सक्रिप्शन —\n' +
-      'लॉगिन आईडी: ' + r.loginId + '\n' +
-      (r.password ? 'पासवर्ड: ' + r.password + '\n' : '') +
-      'प्लान: ' + (r.plan || PLAN_DEFAULT) + '\n';
-    waLink(r.mobile, text);
   }
 
   function prefillUser(r) {
@@ -287,7 +276,7 @@ export default function AdminPanel({ onClose }) {
 
           {tab === 'requests' ? (
             <>
-            <div className="note">✅ "स्वीकृत" करते ही यूज़र अपने-आप बन जाता है और उसके WhatsApp पर लॉगिन आईडी/पासवर्ड भेजने का मैसेज खुलता है।</div>
+            <div className="note">✅ "स्वीकृत" करते ही यूज़र अपने-आप बन जाता है । इसके बाद “लॉगिन जानकारी भेजें” से उम्मीदवार को आईडी/पासवर्ड भेज सकते हैं।</div>
             {reqs === null ? <div className="boot" style={{ position: 'static', padding: 40 }}><div className="spin" /></div> : (
               !reqs.length ? (
                 <div className="empty"><div className="em">🔔</div><h3>कोई अनुरोध नहीं</h3><div>लॉगिन स्क्रीन से भेजे गए सब्सक्रिप्शन अनुरोध यहाँ दिखेंगे।</div></div>
@@ -310,7 +299,7 @@ export default function AdminPanel({ onClose }) {
                         <button className="btn gold sm" disabled={busyId === r._id || r.status === 'approved'} onClick={() => setReqStatus(r._id, 'approved')}>✅ स्वीकृत</button>
                         <button className="btn sm" disabled={busyId === r._id || r.status === 'rejected'} onClick={() => setReqStatus(r._id, 'rejected')}>❌ अस्वीकृत</button>
                         <button className="btn sm" disabled={busyId === r._id || r.status === 'pending'} onClick={() => setReqStatus(r._id, 'pending')}>↺ पेंडिंग</button>
-                        <button className="btn sm" onClick={() => whatsapp(r)}>💬 व्हाट्सएप</button>
+                        {r.status === 'approved' && r.password && <button className="btn sm" onClick={() => sendCredentials(r, { username: r.loginId })}>लॉगिन जानकारी भेजें</button>}
                         <button className="btn sm" onClick={() => prefillUser(r)}>➕ यूज़र बनाएँ</button>
                       </div>
                     </div>
