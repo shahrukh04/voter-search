@@ -50,6 +50,8 @@ export const api = {
   logout: () => request('/auth/logout', { method: 'POST' }),
   revokeDevice: (id, sid) => request('/admin/users/' + id + '/sessions/' + sid, { method: 'DELETE' }),
   deviceLimit: (id, deviceLimit) => request('/admin/users/' + id + '/device-limit', { method: 'PUT', body: { deviceLimit } }),
+  requestOtp: payload => request('/auth/recovery/request', { method: 'POST', body: payload }),
+  resetPassword: payload => request('/auth/recovery/confirm', { method: 'POST', body: payload }),
   changePassword: payload => request('/auth/change-password', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
 

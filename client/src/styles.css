@@ -359,3 +359,32 @@ footer{color:var(--mut);font-size:12.5px;text-align:center;padding:6px 18px 30px
 .profile-sheet .fld input{width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--card);color:var(--ink);font:inherit}
 .profile-sheet form>.btn{margin:4px}
 .hero .brand{flex-wrap:wrap}
+
+/* Account settings */
+.profile-modal{padding:20px;align-items:center}
+.profile-modal .profile-sheet{max-width:540px;padding:0;border:1px solid var(--line);border-radius:24px;max-height:calc(100dvh - 40px);box-shadow:0 24px 80px rgba(0,0,0,.28)}
+.profile-header{position:sticky;top:0;z-index:1;margin:0;padding:20px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.profile-header h2{font-size:21px;letter-spacing:0}
+.profile-header .xm{border-radius:12px}
+.profile-content{padding:24px}
+.profile-account{display:flex;align-items:center;gap:14px;padding:18px;background:var(--soft);border:1px solid var(--line);border-radius:16px;margin-bottom:26px}
+.profile-avatar{display:grid;place-items:center;width:48px;height:48px;flex-shrink:0;border-radius:14px;background:var(--accent);color:white;font-size:23px;font-weight:800}
+.profile-identity{min-width:0;flex:1;overflow-wrap:anywhere}
+.profile-identity h3{font-size:17px;margin:0 0 4px;color:var(--ink)}
+.profile-identity span{font-size:13px;color:var(--mut)}
+.profile-role{font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:20px;padding:5px 9px;color:var(--accent);white-space:nowrap}
+.profile-section-title h3{margin:0 0 6px;font-size:18px;color:var(--ink)}
+.profile-section-title p,.profile-description{font-size:13px;color:var(--mut);line-height:1.7;margin:0 0 22px}
+.profile-content .fld{font-size:13px;color:var(--ink);gap:8px;margin-bottom:18px}
+.profile-content .fld input,.profile-content .fld select{width:100%;height:48px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card);color:var(--ink);font:inherit;font-size:16px}
+.profile-content input:focus-visible,.profile-content select:focus-visible,.profile-content button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.profile-content .profile-hint{font-size:12px;line-height:1.8;color:var(--mut);margin:4px 0 20px}
+.profile-content .profile-feedback{font-size:13px;line-height:1.7;border-left:3px solid var(--accent);padding:12px;background:var(--soft);border-radius:8px;margin:12px 0}
+.profile-content form>.btn,.profile-content>.btn{width:100%;min-height:46px;margin:6px 0 0;justify-content:center;border-radius:10px}
+.profile-content .profile-text-button{background:transparent;border-color:transparent;color:var(--accent);box-shadow:none}
+.profile-success{text-align:center;padding:16px 0}
+.profile-success-icon{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 18px;border-radius:50%;background:var(--soft);color:var(--accent);font-size:28px}
+.profile-success h3{font-size:21px;color:var(--ink)}
+.profile-success p{color:var(--mut);font-size:14px;line-height:1.8}
+.profile-content button:disabled{cursor:wait;opacity:.6}
+@media(max-width:480px){.profile-modal{padding:10px}.profile-modal .profile-sheet{max-height:calc(100dvh - 20px);border-radius:18px}.profile-header{padding:16px}.profile-content{padding:18px}.profile-account{padding:14px;gap:10px;flex-wrap:wrap}.profile-role{margin-left:auto}}

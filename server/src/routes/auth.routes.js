@@ -5,6 +5,7 @@ const User = require('../models/User');
 const { authRequired } = require('../middleware/auth');
 
 const router = express.Router();
+router.use('/recovery', require('./recovery.routes'));
 
 const { randomUUID } = require('crypto');
 
@@ -99,7 +100,7 @@ router.post('/change-password', authRequired, async (req, res, next) => {
     const update = { passwordHash: await bcrypt.hash(newPassword, 10), sessions: [] };
     if (mobile !== undefined) update.mobile = mobile;
     const result = await User.updateOne(
-      { _id: req.user._id, passwordHash: req.user.passwordHash }, { $set: update }
+      { _id: req.user._id, passwordHash: req.user.passwordHash }, { $set: update, $unset: { passwordReset: 1 } }
     );
     if (!result.modifiedCount) return res.status(409).json({ error: 'password_changed' });
     res.json({ ok: true });
