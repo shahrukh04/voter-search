@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     name: { type: String, required: true, trim: true },
     role: { type: String, enum: ['admin', 'user'], default: 'user' },
+    mobile: { type: String, default: '' },
     active: { type: Boolean, default: true },
     // Subscription end date. Admin perpetual accounts use a far-future date.
     expiresAt: { type: Date, required: true },
@@ -26,6 +27,7 @@ userSchema.methods.toSafeJSON = function () {
     username: this.username,
     name: this.name,
     role: this.role,
+    mobile: this.mobile || '',
     superAdmin: this.username === 'srk' && this.role === 'admin',
     active: this.active,
     expiresAt: this.expiresAt,

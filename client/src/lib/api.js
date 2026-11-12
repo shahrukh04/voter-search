@@ -19,6 +19,9 @@ async function request(path, { method = 'GET', body, raw = false } = {}) {
   try { data = await res.json(); } catch (e) { /* no body */ }
 
   if (!res.ok) {
+    if (token && path !== '/auth/login' && (res.status === 401 || data?.error === 'subscription_expired')) {
+      window.dispatchEvent(new Event('auth-invalid'));
+    }
     const err = new Error((data && data.error) || 'request_failed');
     err.status = res.status;
     err.data = data;
@@ -47,8 +50,10 @@ export const api = {
   logout: () => request('/auth/logout', { method: 'POST' }),
   revokeDevice: (id, sid) => request('/admin/users/' + id + '/sessions/' + sid, { method: 'DELETE' }),
   deviceLimit: (id, deviceLimit) => request('/admin/users/' + id + '/device-limit', { method: 'PUT', body: { deviceLimit } }),
+  changePassword: payload => request('/auth/change-password', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
 
+  searchVoters: (state, page) => request('/voters/search', { method: 'POST', body: { state, page } }),
   getVoters: () => request('/voters'),
   getMeta: () => request('/voters/meta'),
 

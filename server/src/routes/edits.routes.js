@@ -6,7 +6,7 @@ const { authRequired, adminRequired } = require('../middleware/auth');
 const router = express.Router();
 
 // GET /api/edits -> { i: {n,w,s} } map (mirrors the legacy EDITS object)
-router.get('/', authRequired, async (_req, res) => {
+router.get('/', authRequired, adminRequired, async (_req, res) => {
   try {
     const edits = await Edit.find({}, { _id: 0, i: 1, n: 1, w: 1, s: 1 }).lean();
     const map = {};

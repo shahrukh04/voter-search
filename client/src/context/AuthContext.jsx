@@ -40,27 +40,14 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   useEffect(() => {
-    if (!token) return;
-    let active = true;
-    async function checkSession() {
-      if (document.hidden) return;
-      try { await api.me(); }
-      catch (error) {
-        if (active && error.status === 401) {
-          setToken(null);
-          setUser(null);
-          if (localStorage.getItem(TOKEN_KEY) === token) localStorage.removeItem(TOKEN_KEY);
-        }
-      }
+    function invalidSession() {
+      setToken(null);
+      setUser(null);
+      try { localStorage.removeItem(TOKEN_KEY); } catch {}
     }
-    const timer = setInterval(checkSession, 15000);
-    document.addEventListener('visibilitychange', checkSession);
-    return () => {
-      active = false;
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange', checkSession);
-    };
-  }, [token, user?.role]);
+    window.addEventListener('auth-invalid', invalidSession);
+    return () => window.removeEventListener('auth-invalid', invalidSession);
+  }, []);
 
   const login = useCallback(async (username, password) => {
     const res = await api.login(username, password);

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { api } from '../lib/api.js';
+import Profile from '../components/Profile.jsx';
 import { copyText } from '../lib/format.js';
 
 function Crest() {
@@ -59,6 +60,8 @@ export default function Login() {
     }
   }
 
+  if (mode === 'forgot') return <Profile recovery onClose={() => setMode('login')} />;
+
   if (mode === 'subscribe') {
     return <Subscribe config={config} onBack={() => setMode('login')} />;
   }
@@ -88,6 +91,7 @@ export default function Login() {
         </label>
         <button className="go" type="submit" disabled={busy}>{busy ? 'जाँच हो रही है…' : '🔐 लॉगिन'}</button>
         <div className="err" role="alert">{err}</div>
+        <button type="button" className="lnk" onClick={() => setMode('forgot')}>पासवर्ड भूल गए?</button>
         <button type="button" className="lnk" onClick={() => setMode('subscribe')}>सब्सक्रिप्शन नहीं है? अनुरोध भेजें →</button>
       </form>
     </div>

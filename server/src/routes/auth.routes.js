@@ -85,6 +85,27 @@ router.post('/logout', authRequired, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.post('/change-password', authRequired, async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword, mobile } = req.body || {};
+    if (typeof oldPassword !== 'string' || typeof newPassword !== 'string' ||
+        newPassword.length < 6 || newPassword.length > 72 || Buffer.byteLength(newPassword) > 72) {
+      return res.status(400).json({ error: 'invalid_password' });
+    }
+    if (mobile !== undefined && !/^[0-9]{10}$/.test(mobile)) return res.status(400).json({ error: 'invalid_mobile' });
+    if (!await bcrypt.compare(oldPassword, req.user.passwordHash)) {
+      return res.status(400).json({ error: 'incorrect_password' });
+    }
+    const update = { passwordHash: await bcrypt.hash(newPassword, 10), sessions: [] };
+    if (mobile !== undefined) update.mobile = mobile;
+    const result = await User.updateOne(
+      { _id: req.user._id, passwordHash: req.user.passwordHash }, { $set: update }
+    );
+    if (!result.modifiedCount) return res.status(409).json({ error: 'password_changed' });
+    res.json({ ok: true });
+  } catch (error) { next(error); }
+});
+
 // GET /api/auth/me
 router.get('/me', authRequired, (req, res) => {
   res.json({ user: req.user.toSafeJSON() });
