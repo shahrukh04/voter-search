@@ -430,3 +430,10 @@ footer{color:var(--mut);font-size:12.5px;text-align:center;padding:6px 18px 30px
 .subscription-success p{font-size:14px;color:#797184;line-height:1.9;margin-bottom:24px}
 .subscription-page :is(button,input,a):focus-visible{outline:3px solid #9874bf;outline-offset:3px}
 @media(max-width:680px){.subscription-page{padding:16px 12px 30px}.subscription-header{flex-wrap:wrap;margin-bottom:18px}.subscription-back{font-size:12px;padding:9px 11px}.subscription-layout{grid-template-columns:1fr;border-radius:18px}.subscription-payment{padding:26px 20px}.subscription-register{padding:28px 22px}.subscription-payment h1{font-size:26px}.subscription-qr{width:min(100%,300px)}.subscription-help{flex-wrap:wrap}}
+
+.vote-toggle{display:block;margin-top:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--accent);font:inherit;font-weight:700}
+.vote-toggle.marked{background:var(--soft);color:var(--ink)}
+.vote-report{max-width:900px;padding-block:24px 60px}.vote-report header,.vote-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.vote-report h2{margin:24px 0 10px;font-size:20px}.vote-report table{width:100%;border-collapse:collapse;background:var(--card)}.vote-report th,.vote-report td{padding:8px;text-align:start;border-bottom:1px solid var(--line)}
+.vote-entry{background:var(--card);padding:12px;border-bottom:1px solid var(--line)}.vote-entry small{display:block;color:var(--mut)}.vote-report .adm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:500px){.vote-report .two{grid-template-columns:1fr}}

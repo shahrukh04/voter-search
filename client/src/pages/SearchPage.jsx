@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import { exportCSV, fmt } from '../lib/format.js';
 import { defaultState, houseKey, PAGE_F, PAGE_V, parseQuery, prepare, REL_PLACEHOLDER, run, SMODE_PLACEHOLDER, SMODES, suggest } from '../lib/search.js';
 
+import VoteReport from './VoteReport.jsx';
 import Header from '../components/Header.jsx';
 import SearchBar from '../components/SearchBar.jsx';
 import WardChips from '../components/WardChips.jsx';
@@ -20,6 +21,40 @@ export default function SearchPage({ onOpenAdmin }) {
   const toast = useToast();
   // क्रमांक/वार्ड सुधारने का विकल्प केवल एडमिन को दिखता है।
   const isAdmin = user?.role === 'admin';
+
+  const [report, setReport] = useState(false);
+  const [owner, setOwner] = useState(user.id);
+  const [voteData, setVoteData] = useState(null);
+  const [voteError, setVoteError] = useState(false);
+  const [voteBusy, setVoteBusy] = useState(false);
+  const [voteRevision, setVoteRevision] = useState(0);
+  const marks = voteData?.owner === owner ? voteData.ids : null;
+  const retryVotes = () => setVoteRevision(v => v + 1);
+  useEffect(() => {
+    let alive = true;
+    setVoteError(false);
+    api.voteMarks(owner).then(({ ids }) => {
+      if (alive) setVoteData({ owner, ids: new Set(ids) });
+    }).catch(() => { if (alive) { setVoteData(null); setVoteError(true); } });
+    return () => { alive = false; };
+  }, [owner, voteRevision, report]);
+
+  async function changeVote(r, voted) {
+    if (voteBusy || !marks) return;
+    if (!voted && !window.confirm(r.n + ' का मतदान टिक हटाएँ?')) return;
+    setVoteBusy(true);
+    try {
+      await api.setVote(owner, r.i, voted);
+      setVoteData(previous => {
+        if (previous?.owner !== owner) return previous;
+        const ids = new Set(previous.ids);
+        if (voted) ids.add(r.i); else ids.delete(r.i);
+        return { owner, ids };
+      });
+      toast(voted ? 'वोट दिया दर्ज हुआ' : 'मतदान टिक हटाया गया');
+    } catch { toast('बदलाव सेव नहीं हुआ। फिर कोशिश करें।'); }
+    finally { setVoteBusy(false); }
+  }
 
   const [rawVoters, setRawVoters] = useState(null);
   const [edits, setEdits] = useState({});
@@ -222,6 +257,10 @@ export default function SearchPage({ onOpenAdmin }) {
     );
   }
 
+  if (report) return <VoteReport records={ctx.DATA} user={user} owner={owner} setOwner={setOwner} marks={marks}
+    pending={voteBusy} onRemove={r => changeVote(r, false)} error={voteError} retry={retryVotes}
+    onClose={() => { setOwner(user.id); setReport(false); }} />;
+
   const fam = S.view === 'family';
   const per = fam ? PAGE_F : PAGE_V;
   const pages = Math.max(1, Math.ceil(RES.length / per));
@@ -297,6 +336,8 @@ export default function SearchPage({ onOpenAdmin }) {
             <div className="bar">
               <span className="cnt">{fmt(RES.length)}{fam ? ' परिवार' : ' परिणाम'}{RES.length > per ? ` · पेज ${cur + 1}/${pages}` : ''}</span>
               <div className="mact">
+                <button className="btn sm" onClick={() => { setReport(true); window.scrollTo(0, 0); }}>मतदान रिपोर्ट</button>
+                {voteError && <button className="btn sm" onClick={retryVotes}>मतदान डेटा फिर लाएँ</button>}
                 <button className="btn sm" onClick={refresh} disabled={refreshing} title="सारे फ़िल्टर/खोज हटाकर पूरा डेटा दोबारा लाएँ (पूरी वेबसाइट reload नहीं)">
                   <span className={'ric' + (refreshing ? ' spin' : '')}>↻</span>{refreshing ? ' रीफ़्रेश…' : ' रीफ़्रेश'}
                 </button>
@@ -339,6 +380,9 @@ export default function SearchPage({ onOpenAdmin }) {
                     <VoterCard
                       key={x.i}
                       r={x}
+                      voted={marks?.has(x.i) || false}
+                      voteDisabled={!marks || voteBusy || (marks.has(x.i) && !user.superAdmin)}
+                      onVote={r => changeVote(r, !marks.has(r.i))}
                       k={i}
                       qWords={qWords}
                       fa={S.fa}

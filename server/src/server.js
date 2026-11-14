@@ -38,6 +38,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/voters', voterRoutes);
+app.use('/api/votes', require('./routes/votes.routes'));
 app.use('/api/edits', editRoutes);
 app.use('/api/subscribe', subscribeRoutes);
 app.use('/api/admin', adminRoutes);

@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema(
     expiresAt: { type: Date, required: true },
     deviceLimit: { type: Number, default: 2 },
     sessions: [{ _id: false, device: String, sid: String, expiresAt: Date, loginAt: Date, kind: String, browser: String, deviceName: String }],
+    votedIds: { type: [Number], default: [], select: false },
     lastLoginAt: { type: Date },
   },
   { timestamps: true }

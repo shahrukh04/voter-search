@@ -17,7 +17,7 @@ router.use(async (req, res, next) => {
       { upsert: true, new: true });
     if (rate.count > 30) return res.status(429).json({ error: 'otp_rate_limit' });
     next();
-  } catch (error) { res.status(error.status || 503).json({ error: 'otp_unavailable' }); }
+  } catch (error) { res.status(503).json({ error: error.message === 'otp_unavailable' ? 'otp_unavailable' : 'otp_provider_error' }); }
 });
 
 router.post('/request', async (req, res) => {

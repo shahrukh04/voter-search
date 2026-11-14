@@ -13,7 +13,7 @@ export function TagsOf({ r }) {
   );
 }
 
-export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, onHouse }) {
+export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, onHouse, voted, voteDisabled, onVote }) {
   // Which line the typed words actually matched — highlight only that one.
   const hlName = smode === 'naam' || smode === 'dono';
   const hlRel = smode === 'pita' || smode === 'dono' || (smode === 'naam' && fa);
@@ -48,6 +48,10 @@ export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, on
           ) : null}
           {r.m ? <span className="ch">📍 {r.m}</span> : null}
         </div>
+        {!r.d && <button type="button" className={'vote-toggle' + (voted ? ' marked' : '')}
+          aria-pressed={voted} disabled={voteDisabled} onClick={event => { event.stopPropagation(); onVote(r); }}>
+          {voted ? '✓ वोट दिया' : '□ वोट दिया दर्ज करें'}
+        </button>}
         {r.e ? <div className="epic">{r.e}</div> : null}
       </div>
     </article>

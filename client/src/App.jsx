@@ -28,5 +28,5 @@ export default function App() {
 
   if (adminOpen && isAdmin) return <AdminPanel onClose={() => setAdminOpen(false)} />;
 
-  return <SearchPage onOpenAdmin={isAdmin ? () => setAdminOpen(true) : null} />;
+  return <SearchPage key={user.id} onOpenAdmin={isAdmin ? () => setAdminOpen(true) : null} />;
 }

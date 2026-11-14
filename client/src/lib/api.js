@@ -55,6 +55,9 @@ export const api = {
   changePassword: payload => request('/auth/change-password', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
 
+  voteAccounts: () => request('/votes/accounts'),
+  voteMarks: owner => request('/votes/' + owner),
+  setVote: (owner, id, voted) => request('/votes/' + owner + '/' + id, { method: voted ? 'PUT' : 'DELETE' }),
   getVoters: () => request('/voters'),
   getMeta: () => request('/voters/meta'),
 
