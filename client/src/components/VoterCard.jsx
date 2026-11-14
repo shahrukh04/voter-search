@@ -13,7 +13,7 @@ export function TagsOf({ r }) {
   );
 }
 
-export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, onHouse, voted, voteDisabled, onVote }) {
+export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, voted, voteDisabled, onVote }) {
   // Which line the typed words actually matched — highlight only that one.
   const hlName = smode === 'naam' || smode === 'dono';
   const hlRel = smode === 'pita' || smode === 'dono' || (smode === 'naam' && fa);
@@ -39,9 +39,9 @@ export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, on
           <span className="ch">{r.a ?? '—'} वर्ष · {r.g === 'पुरुष' ? '♂' : '♀'}</span>
           {r.h ? (
             <span
-              className="ch h"
-              title="इस मकान के मतदाता"
-              onClick={(e) => { e.stopPropagation(); onHouse(r); }}
+              className="ch"
+              style={{ cursor: 'default' }}
+              onClick={(e) => e.stopPropagation()}
             >
               🏠 {r.h}
             </span>

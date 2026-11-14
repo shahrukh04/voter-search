@@ -6,6 +6,8 @@ import { exportCSV, fmt } from '../lib/format.js';
 import { defaultState, houseKey, PAGE_F, PAGE_V, parseQuery, prepare, REL_PLACEHOLDER, run, SMODE_PLACEHOLDER, SMODES, suggest } from '../lib/search.js';
 
 import VoteReport from './VoteReport.jsx';
+import { flushSync } from 'react-dom';
+import { ListFormat, VoterRows } from '../components/ListFormat.jsx';
 import Header from '../components/Header.jsx';
 import SearchBar from '../components/SearchBar.jsx';
 import WardChips from '../components/WardChips.jsx';
@@ -60,6 +62,7 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
   const [loadErr, setLoadErr] = useState('');
   const [S, setS] = useState(defaultState);
   const [page, setPage] = useState(0); // 0-based वर्तमान पेज
+  const [format, setFormat] = useState('cards');
   const [printAll, setPrintAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -170,7 +173,7 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
     const r = ctx.BYI.get(i);
     const next = { ...edits };
     if (+w === r.w0 && String(s) === r.s0) delete next[i];
-    else next[i] = { n: r.n, w: +w, s: String(s) };
+    else next[i] = { n: r.originalName, w: +w, s: String(s) };
     persist(next);
     toast('✓ सुधार सेव हुआ — हर जगह बदल गया');
   }, [ctx, edits, persist, toast]);
@@ -189,8 +192,8 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
       const e = obj[k];
       const i = +k;
       const r = ctx.BYI.get(i);
-      if (r && e && e.n === r.n && Number.isInteger(+e.w) && +e.w >= 1 && +e.w <= 99 && String(e.s).trim()) {
-        clean[i] = { n: r.n, w: +e.w, s: String(e.s).trim() };
+      if (r && e && e.n === r.originalName && Number.isInteger(+e.w) && +e.w >= 1 && +e.w <= 99 && String(e.s).trim()) {
+        clean[i] = { n: r.originalName, w: +e.w, s: String(e.s).trim() };
         n++;
       }
     }
@@ -234,8 +237,8 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
   }, [ctx]);
 
   const handlePrint = useCallback(() => {
-    setPrintAll(true);
-    setTimeout(() => { window.print(); setPrintAll(false); }, 80);
+    flushSync(() => setPrintAll(true));
+    try { window.print(); } finally { setPrintAll(false); }
   }, []);
 
   if (loadErr) {
@@ -346,8 +349,9 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
                 <button className="btn sm" onClick={() => setModal({ type: 'edits' })} hidden={!isAdmin}>
                   ✎ सुधार{Object.keys(edits).length ? <b className="bdg">{Object.keys(edits).length}</b> : null}
                 </button>
+                {!fam && <ListFormat value={format} onChange={setFormat} />}
                 <button className="btn sm" onClick={() => exportCSV(S, RES)}>⬇ CSV</button>
-                <button className="btn sm" onClick={handlePrint}>🖨 प्रिंट</button>
+                <button className="btn sm" onClick={handlePrint}>PDF / प्रिंट</button>
               </div>
             </div>
 
@@ -355,6 +359,7 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
               <div className="note">ℹ️ {fmt(NOHOUSE)} मतदाताओं का मकान नंबर नहीं है, इसलिए वे परिवार व्यू में नहीं दिखते — "मतदाता" व्यू में देखें।</div>
             ) : null}
 
+            <h2 className="print-caption">{fam ? 'परिवार सूची' : 'मतदाता सूची'} · वार्ड {S.ward || 'सभी'} · {RES.length} परिणाम {S.q && '· '+S.q}</h2>
             {!RES.length ? (
               <div className="empty">
                 <div className="em">🔍</div>
@@ -365,6 +370,8 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
                 </div>
               </div>
             ) : (
+              !fam && format === 'rows' ? <VoterRows records={visible} onOpen={i=>setModal({type:'record',i})}
+                action={r=>!r.d && <button className="btn sm" disabled={!marks || voteBusy} onClick={()=>changeVote(r,!marks.has(r.i))}>{marks?.has(r.i) ? '✓ पर्ची दी गई' : 'पर्ची दी गई दर्ज करें'}</button>} /> :
               <div className={'grid' + (fam ? ' f' : '')}>
                 {visible.map((x, i) => (
                   fam ? (
@@ -390,7 +397,6 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
                       fa={S.fa}
                       smode={S.smode}
                       onOpen={(idx) => setModal({ type: 'record', i: idx })}
-                      onHouse={showVotersForHouse}
                     />
                   )
                 ))}
@@ -472,6 +478,11 @@ export default function SearchPage({ onOpenAdmin, report, setReport }) {
           onEditSave={saveEdit}
           onResetEdit={resetEdit}
           onShowFamily={showFamilyFor}
+          onDetailsSave={user.superAdmin ? async changes => {
+            const i = active.i;
+            const { details } = await api.updateDetails(i, changes);
+            setRawVoters(previous => previous.map(v => v.i === i ? { ...v, details } : v));
+          } : null}
           canEdit={isAdmin}
           toast={toast}
         />

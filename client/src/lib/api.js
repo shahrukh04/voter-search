@@ -59,6 +59,7 @@ export const api = {
   voteMarks: owner => request('/votes/' + owner),
   setVote: (owner, id, voted) => request('/votes/' + owner + '/' + id, { method: voted ? 'PUT' : 'DELETE' }),
   getVoters: () => request('/voters'),
+  updateDetails: (i, fields) => request('/voters/' + i + '/details', { method: 'PATCH', body: fields }),
   getMeta: () => request('/voters/meta'),
 
   getEdits: () => request('/edits'),

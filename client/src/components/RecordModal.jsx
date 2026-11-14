@@ -2,11 +2,28 @@ import React, { useState } from 'react';
 import { copyText, gc, highlightWords, ini, recLine, wa } from '../lib/format.js';
 import { MemLi } from './FamilyCard.jsx';
 
-export default function RecordModal({ r, others, qWords, fa, wards, onClose, onOpenRecord, onEditSave, onResetEdit, onShowFamily, canEdit = false, toast }) {
+export default function RecordModal({ r, others, qWords, fa, wards, onClose, onOpenRecord, onEditSave, onResetEdit, onDetailsSave, onShowFamily, canEdit = false, toast }) {
   const [editing, setEditing] = useState(false);
   const [edS, setEdS] = useState(r.s);
   const [edW, setEdW] = useState(r.w);
 
+  const fields = [['n','नाम'], ['rn','संबंधी का नाम'], ['rel','रिश्ता'], ['a','आयु'], ['g','लिंग'],
+    ['h','मकान संख्या'], ['m','मोहल्ला'], ['e','मतदाता ID'], ['l','सूची का नाम']];
+  const [draft, setDraft] = useState({});
+  const [saving, setSaving] = useState(false);
+  async function saveDetails(event) {
+    event.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    try {
+      const changes = { ...draft };
+      if ('a' in changes) changes.a = changes.a === '' ? null : Number(changes.a);
+      await onDetailsSave(changes);
+      setDraft({});
+      toast('मतदाता विवरण सेव हुआ');
+    } catch { toast('विवरण सेव नहीं हुआ। दोबारा कोशिश करें।'); }
+    finally { setSaving(false); }
+  }
   const maxWard = Math.max(9, ...wards);
   const wardOpts = [];
   for (let w = 1; w <= maxWard; w++) wardOpts.push(w);
@@ -67,19 +84,34 @@ export default function RecordModal({ r, others, qWords, fa, wards, onClose, onO
                   onEditSave(r.i, +edW, edS.trim());
                   setEditing(false);
                 }}
-              >✓ सेव करें</button>
+              >वार्ड / क्रमांक सेव करें</button>
               <button className="btn sm" onClick={() => { setEdS(r.s); setEdW(r.w); setEditing(false); }}>रद्द</button>
               {r.ed ? (
                 <button className="btn sm" onClick={() => { onResetEdit(r.i); setEditing(false); }}>↺ मूल मान</button>
               ) : null}
             </div>
-            <small className="orig">सुधार हर जगह (खोज, परिवार, प्रिंट, CSV) बदल जाएगा।</small>
+            {onDetailsSave && <form onSubmit={saveDetails}>
+              <h3>मतदाता विवरण</h3>
+              <fieldset disabled={saving} style={{border:0,padding:0,margin:0}}>
+                <div className="edr">{fields.map(([key,label]) => <label key={key}>{label}
+                  <input type={key === 'a' ? 'number' : 'text'} min={0} max={150} maxLength={250}
+                    required={key === 'n'} value={draft[key] ?? r[key] ?? ''}
+                    onChange={event => setDraft({ ...draft, [key]: event.target.value })}/>
+                </label>)}</div>
+                <label><input type="checkbox" checked={draft.d ?? !!r.d}
+                  onChange={event => setDraft({ ...draft, d:event.target.checked })}/> सूची में विलोपित</label>
+                <div className="mact"><button className="btn gold sm" disabled={!Object.keys(draft).length}>
+                  {saving ? 'सेव हो रहा है…' : 'मतदाता विवरण सेव करें'}
+                </button></div>
+              </fieldset>
+            </form>}
+            <small className="orig">सुधार खोज, परिवार, प्रिंट और CSV में भी दिखेगा।</small>
           </div>
         ) : null}
 
         <div className="mact">
           {canEdit ? (
-            <button className="btn" onClick={() => { setEditing((v) => !v); setEdS(r.s); setEdW(r.w); }}>✏️ क्रमांक / वार्ड सुधारें</button>
+            <button className="btn" onClick={() => { setDraft({}); setEditing((v) => !v); setEdS(r.s); setEdW(r.w); }}>✏️ {onDetailsSave ? 'मतदाता विवरण सुधारें' : 'क्रमांक / वार्ड सुधारें'}</button>
           ) : null}
           <button className="btn" onClick={() => copyText(recLine(r)).then(() => toast('✓ कॉपी हो गया'))}>📋 कॉपी</button>
           <button className="btn" onClick={() => wa(recLine(r))}>💬 शेयर</button>

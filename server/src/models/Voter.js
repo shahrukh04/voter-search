@@ -20,6 +20,7 @@ const mongoose = require('mongoose');
 const voterSchema = new mongoose.Schema(
   {
     i: { type: Number, required: true, unique: true, index: true },
+    details: { n: String, rn: String, rel: String, a: Number, g: String, h: String, m: String, e: String, l: String, d: Boolean },
     n: { type: String, default: '' },
     rn: { type: String, default: '' },
     rel: { type: String, default: '' },

@@ -82,10 +82,12 @@ export function prepare(rawRecords, edits = {}) {
   // Apply corrections (क्रमांक / वार्ड सुधार)
   DATA.forEach((r) => {
     if (r.w0 === undefined) { r.w0 = r.w; r.s0 = r.s; }
+    r.originalName = r.n;
     const e = edits[r.i];
     if (e && e.n === r.n) { r.w = +e.w; r.s = String(e.s); r.ed = 1; } else { r.w = r.w0; r.s = r.s0; r.ed = 0; }
   });
 
+  DATA.forEach(r => Object.assign(r, r.details));
   const WARDS = [...new Set(DATA.map((r) => r.w))].sort((a, b) => a - b);
   const epicCount = new Map();
   const fpCount = new Map();
