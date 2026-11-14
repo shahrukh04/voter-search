@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Profile from './Profile.jsx';
+import InstallApp from './InstallApp.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function SideMenu({ onReports, onList, onAdmin }) {
@@ -22,6 +23,7 @@ export default function SideMenu({ onReports, onList, onAdmin }) {
         <button onClick={() => navigate(() => setProfile(true))}>मेरी प्रोफाइल</button>
         <button onClick={() => navigate(onReports)}>पर्ची वितरण रिपोर्ट</button>
         {onAdmin && <button onClick={() => navigate(onAdmin)}>एडमिन पैनल</button>}
+        <InstallApp />
       </nav>
     </dialog>, document.body)}
     {profile && createPortal(<Profile onClose={() => setProfile(false)} />, document.body)}

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { api } from '../lib/api.js';
 import Profile from '../components/Profile.jsx';
+import InstallApp from '../components/InstallApp.jsx';
 import { copyText } from '../lib/format.js';
 
 function Crest() {
@@ -93,6 +94,7 @@ export default function Login() {
         <div className="err" role="alert">{err}</div>
         <button type="button" className="lnk" onClick={() => setMode('forgot')}>पासवर्ड भूल गए? SMS से बदलें</button>
         <button type="button" className="lnk" onClick={() => setMode('subscribe')}>सब्सक्रिप्शन नहीं है? अनुरोध भेजें →</button>
+        <InstallApp className="lnk" />
       </form>
     </div>
   );
