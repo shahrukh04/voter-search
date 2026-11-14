@@ -3,7 +3,7 @@ import { api } from '../lib/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 
-import Profile from '../components/Profile.jsx';
+import SideMenu from '../components/SideMenu.jsx';
 
 const PLAN_DEFAULT = '₹5,000 / माह';
 
@@ -35,10 +35,9 @@ function StatusTag({ status }) {
   return <span className="tag">पेंडिंग</span>;
 }
 
-export default function AdminPanel({ onClose }) {
+export default function AdminPanel({ onClose, onReports }) {
   const { user, logout } = useAuth();
   const toast = useToast();
-  const [profileOpen, setProfileOpen] = useState(false);
 
   const [tab, setTab] = useState('users');
   const [reqs, setReqs] = useState(null);
@@ -240,19 +239,19 @@ export default function AdminPanel({ onClose }) {
     <div className="adm">
       <header className="adm-hero">
         <div className="wrap adm-hero-in">
+          <SideMenu onList={onClose} onReports={onReports} />
           <div>
             <div className="adm-own">एडमिन पैनल</div>
             <div className="adm-sub">{user ? user.name + ' · ' + user.username : ''}</div>
           </div>
           <div className="adm-hbtns">
-            <button className="icon-btn" onClick={() => setProfileOpen(true)} aria-label="मेरी प्रोफाइल">👤</button>
             <button className="icon-btn" onClick={onClose} title="ऐप पर वापस" aria-label="ऐप पर वापस">←</button>
             <button className="icon-btn" onClick={logout} title="लॉग आउट" aria-label="लॉग आउट">⎋</button>
           </div>
         </div>
       </header>
 
-      {profileOpen && <Profile onClose={() => setProfileOpen(false)} />}
+
       <main>
         <div className="wrap">
           <section className="adm-metrics" aria-label="लॉगिन सारांश">

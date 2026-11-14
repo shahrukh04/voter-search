@@ -44,7 +44,6 @@ router.put('/:owner/:id', async (req, res, next) => {
 });
 
 router.delete('/:owner/:id', async (req, res, next) => {
-  if (!req.user.toSafeJSON().superAdmin) return res.sendStatus(403);
   try {
     const id = Number(req.params.id);
     if (!Number.isSafeInteger(id)) return res.sendStatus(400);

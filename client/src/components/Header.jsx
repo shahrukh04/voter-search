@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import Profile from './Profile.jsx';
+import React from 'react';
+import SideMenu from './SideMenu.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 
@@ -18,8 +18,7 @@ function Crest() {
   );
 }
 
-export default function Header({ subtitle, onOpenAdmin }) {
-  const [profileOpen, setProfileOpen] = useState(false);
+export default function Header({ subtitle, onOpenAdmin, onReports, onList }) {
   const { user, config, logout } = useAuth();
   const { theme, toggle } = useTheme();
 
@@ -29,13 +28,13 @@ export default function Header({ subtitle, onOpenAdmin }) {
       <span className="orb a" />
       <span className="orb b" />
       <div className="wrap brand">
+        <SideMenu onList={onList} onReports={onReports} onAdmin={onOpenAdmin} />
         <div className="crest"><Crest /></div>
         <div className="ttl">
           <div className="owner">{(config && config.owner) || 'Shahrukh'}</div>
           <h1>{(config && config.title) || 'जालिया द्वितीय ग्राम पंचायत'}</h1>
           <p>{subtitle}</p>
         </div>
-        <button className="icon-btn" onClick={() => setProfileOpen(true)} aria-label="मेरी प्रोफाइल">👤</button>
         {onOpenAdmin ? (
           <button className="icon-btn" onClick={onOpenAdmin} title="एडमिन पैनल" aria-label="एडमिन पैनल">🛡</button>
         ) : null}
@@ -43,7 +42,7 @@ export default function Header({ subtitle, onOpenAdmin }) {
         <button className="icon-btn" onClick={toggle} aria-label="थीम बदलें">{theme === 'dark' ? '☀️' : '🌙'}</button>
       </div>
     </header>
-    {profileOpen && <Profile onClose={() => setProfileOpen(false)} />}
+
     </>
   );
 }

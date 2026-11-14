@@ -8,6 +8,8 @@ export default function App() {
   const { booting, isAuthed, user } = useAuth();
   const [adminOpen, setAdminOpen] = useState(false);
 
+  const [report, setReport] = useState(false);
+  function openSearch(showReport) { setAdminOpen(false); setReport(showReport); window.scrollTo(0, 0); }
   const isAdmin = !!(user && user.role === 'admin');
 
   // non-admins (or after logout) must never keep the panel open
@@ -26,7 +28,7 @@ export default function App() {
 
   if (!isAuthed) return <Login />;
 
-  if (adminOpen && isAdmin) return <AdminPanel onClose={() => setAdminOpen(false)} />;
+  if (adminOpen && isAdmin) return <AdminPanel onReports={() => openSearch(true)} onClose={() => openSearch(false)} />;
 
-  return <SearchPage key={user.id} onOpenAdmin={isAdmin ? () => setAdminOpen(true) : null} />;
+  return <SearchPage report={report} setReport={setReport} key={user.id} onOpenAdmin={isAdmin ? () => setAdminOpen(true) : null} />;
 }

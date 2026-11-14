@@ -437,3 +437,9 @@ footer{color:var(--mut);font-size:12.5px;text-align:center;padding:6px 18px 30px
 .vote-report h2{margin:24px 0 10px;font-size:20px}.vote-report table{width:100%;border-collapse:collapse;background:var(--card)}.vote-report th,.vote-report td{padding:8px;text-align:start;border-bottom:1px solid var(--line)}
 .vote-entry{background:var(--card);padding:12px;border-bottom:1px solid var(--line)}.vote-entry small{display:block;color:var(--mut)}.vote-report .adm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:500px){.vote-report .two{grid-template-columns:1fr}}
+
+.side-menu{position:fixed;inset:0 auto 0 0;margin:0;width:min(300px,85vw);max-width:100%;height:100dvh;max-height:100dvh;border:0;border-right:1px solid var(--line);padding:22px;background:var(--card);color:var(--ink);box-sizing:border-box}
+.side-menu::backdrop{background:rgba(16,10,34,.55)}
+.side-menu header{display:flex;align-items:center;justify-content:space-between}.side-menu h2{margin:0;font-size:21px}.side-menu p{color:var(--mut);overflow-wrap:anywhere}
+.side-menu nav{display:grid;gap:8px;margin-top:24px}.side-menu nav button{text-align:left;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink);padding:10px 14px;font:inherit;font-weight:700}
+@media(min-width:700px){.vote-report .adm-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}

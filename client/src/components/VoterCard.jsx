@@ -50,7 +50,7 @@ export default function VoterCard({ r, k, qWords, fa, smode = 'naam', onOpen, on
         </div>
         {!r.d && <button type="button" className={'vote-toggle' + (voted ? ' marked' : '')}
           aria-pressed={voted} disabled={voteDisabled} onClick={event => { event.stopPropagation(); onVote(r); }}>
-          {voted ? '✓ वोट दिया' : '□ वोट दिया दर्ज करें'}
+          {voted ? '✓ पर्ची दी गई · टिक हटाएँ' : '□ पर्ची दी गई'}
         </button>}
         {r.e ? <div className="epic">{r.e}</div> : null}
       </div>
